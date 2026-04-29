@@ -3,3 +3,24 @@
 .idea/
 *.iml
 .env
+
+# Terraform local state/cache
+.terraform/
+*.tfstate
+*.tfstate.*
+crash.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+google_compute_engine
+google_compute_engine.pub
+.env
+env.*
+*.pem
+*.key
+*.ppk
+id_rsa   .
+id_ed25519
+@'
+terraform/terraform.tfvars

@@ -1,0 +1,7 @@
+services:
+  order-service:
+    environment:
+      - BACKEND_PORT=8084
+      - MONGODB_URI=mongodb://wrong-mongo-host:27017
+      - JWT_SECRET=dev_secret_change_me
+      - FRONTEND_ORIGIN=*

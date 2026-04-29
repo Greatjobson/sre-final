@@ -9,19 +9,19 @@ import (
 	"strings"
 
 	"github.com/Tedra-ez/AdvancedProgramming_Final/internal/models"
-	"github.com/Tedra-ez/AdvancedProgramming_Final/internal/services"
+	services2 "github.com/Tedra-ez/AdvancedProgramming_Final/internal/services"
 	"github.com/gin-gonic/gin"
 )
 
 type PageHandler struct {
-	productService   *services.ProductService
-	orderService     *services.OrderService
-	authService      *services.AuthService
-	analyticsService *services.AnalyticsService
+	productService   *services2.ProductService
+	orderService     *services2.OrderService
+	authService      *services2.AuthService
+	analyticsService *services2.AnalyticsService
 	templates        map[string]*template.Template
 }
 
-func NewPageHandler(productService *services.ProductService, orderService *services.OrderService, authService *services.AuthService, analyticsService *services.AnalyticsService, templateDir string) (*PageHandler, error) {
+func NewPageHandler(productService *services2.ProductService, orderService *services2.OrderService, authService *services2.AuthService, analyticsService *services2.AnalyticsService, templateDir string) (*PageHandler, error) {
 	basePath := filepath.Join(templateDir, "base.html")
 	pages := []string{
 		"shop", "index", "account", "login", "register",

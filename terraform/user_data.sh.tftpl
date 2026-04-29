@@ -1,0 +1,40 @@
+#!/usr/bin/env bash
+set -euxo pipefail
+
+export DEBIAN_FRONTEND=noninteractive
+
+apt-get update
+apt-get install -y ca-certificates curl git gnupg
+
+install -m 0755 -d /etc/apt/keyrings
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+chmod a+r /etc/apt/keyrings/docker.asc
+
+cat >/etc/apt/sources.list.d/docker.sources <<'EOF'
+Types: deb
+URIs: https://download.docker.com/linux/ubuntu
+Suites: jammy
+Components: stable
+Signed-By: /etc/apt/keyrings/docker.asc
+EOF
+
+apt-get update
+apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+systemctl enable --now docker
+usermod -aG docker ubuntu
+
+mkdir -p /opt/clothes-store
+
+if [ -n "${repository_url}" ]; then
+  rm -rf /opt/clothes-store/app
+  git clone --branch "${repository_ref}" "${repository_url}" /opt/clothes-store/app
+  cd /opt/clothes-store/app
+  docker compose -f "${compose_file}" up -d --build
+else
+  cat >/opt/clothes-store/README-FIRST.txt <<'EOF'
+Infrastructure is ready.
+
+No repository_url was provided, so the application was not cloned automatically.
+Copy the project to this VM or set repository_url in terraform.tfvars and run terraform apply again.
+EOF
+fi

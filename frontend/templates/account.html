@@ -1,0 +1,163 @@
+{{define "title"}}My Account – Clothes Store{{end}}
+
+{{define "content"}}
+{{if .User}}
+<div class="account-page">
+    
+    <aside class="account-sidebar">
+        <div class="account-sidebar-profile">
+            <div class="account-avatar">
+                {{if .User.name}}
+                {{slice .User.name 0 1}}
+                {{else}}
+                U
+                {{end}}
+            </div>
+            <div class="account-sidebar-name">{{if .User.name}}{{.User.name}}{{else}}User{{end}}</div>
+            <div class="account-sidebar-email">{{.User.email}}</div>
+            <span class="account-role-badge {{if or (eq .User.role "admin") (eq .User.role "administrator")}}badge-admin{{end}}">
+                {{.User.role}}
+            </span>
+        </div>
+
+        <nav class="account-nav">
+            <a href="/account" class="account-nav-link active">
+                <i data-lucide="layout-dashboard"></i>
+                <span>Dashboard</span>
+            </a>
+            <a href="/account/orders" class="account-nav-link">
+                <i data-lucide="package"></i>
+                <span>Orders</span>
+            </a>
+            <a href="/wishlist" class="account-nav-link">
+                <i data-lucide="heart"></i>
+                <span>Wishlist</span>
+            </a>
+            {{if or (eq .User.role "admin") (eq .User.role "administrator")}}
+            <div class="account-nav-divider"></div>
+            <div class="account-nav-label">Admin</div>
+            <a href="/admin/products" class="account-nav-link">
+                <i data-lucide="box"></i>
+                <span>Manage Products</span>
+            </a>
+            <a href="/admin/orders" class="account-nav-link">
+                <i data-lucide="clipboard-list"></i>
+                <span>Manage Orders</span>
+            </a>
+            {{end}}
+            <div class="account-nav-divider"></div>
+            <a href="/auth/logout" class="account-nav-link nav-link-danger">
+                <i data-lucide="log-out"></i>
+                <span>Logout</span>
+            </a>
+        </nav>
+    </aside>
+
+    
+    <main class="account-main">
+        
+        <div class="account-hero-card">
+            <div class="account-hero-content">
+                <div class="account-hero-avatar">
+                    {{if .User.name}}
+                    {{slice .User.name 0 1}}
+                    {{else}}
+                    U
+                    {{end}}
+                </div>
+                <div class="account-hero-info">
+                    <h1 class="account-hero-title">Welcome back, {{if .User.name}}{{.User.name}}{{else}}User{{end}}!
+                    </h1>
+                    <p class="account-hero-subtitle">{{.User.email}}</p>
+                    <span class="account-role-badge {{if or (eq .User.role "admin") (eq .User.role "administrator")}}badge-admin{{end}}">
+                        {{.User.role}}
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        {{if or (eq .User.role "admin") (eq .User.role "administrator")}}
+        
+        <div class="account-section-title">
+            <i data-lucide="shield"></i>
+            Admin Panel
+        </div>
+        <div class="account-cards-grid">
+            <a href="/admin/products" class="account-stat-card card-accent-blue">
+                <div class="stat-card-icon">
+                    <i data-lucide="box"></i>
+                </div>
+                <div class="stat-card-info">
+                    <div class="stat-card-title">Manage Products</div>
+                    <div class="stat-card-desc">Add, edit, or remove products from your store.</div>
+                </div>
+                <i data-lucide="chevron-right" class="stat-card-arrow"></i>
+            </a>
+            <a href="/admin/orders" class="account-stat-card card-accent-green">
+                <div class="stat-card-icon">
+                    <i data-lucide="clipboard-list"></i>
+                </div>
+                <div class="stat-card-info">
+                    <div class="stat-card-title">Manage Orders</div>
+                    <div class="stat-card-desc">View and process customer orders.</div>
+                </div>
+                <i data-lucide="chevron-right" class="stat-card-arrow"></i>
+            </a>
+        </div>
+        {{end}}
+
+        
+        <div class="account-section-title">
+            <i data-lucide="zap"></i>
+            Quick Actions
+        </div>
+        <div class="account-cards-grid">
+            <a href="/account/orders" class="account-stat-card card-accent-purple">
+                <div class="stat-card-icon">
+                    <i data-lucide="package"></i>
+                </div>
+                <div class="stat-card-info">
+                    <div class="stat-card-title">My Orders</div>
+                    <div class="stat-card-desc">Track and manage your orders.</div>
+                </div>
+                <i data-lucide="chevron-right" class="stat-card-arrow"></i>
+            </a>
+            <a href="/wishlist" class="account-stat-card card-accent-pink">
+                <div class="stat-card-icon">
+                    <i data-lucide="heart"></i>
+                </div>
+                <div class="stat-card-info">
+                    <div class="stat-card-title">Wishlist</div>
+                    <div class="stat-card-desc">Items you've saved for later.</div>
+                </div>
+                <i data-lucide="chevron-right" class="stat-card-arrow"></i>
+            </a>
+            <a href="/shop" class="account-stat-card card-accent-orange">
+                <div class="stat-card-icon">
+                    <i data-lucide="shopping-bag"></i>
+                </div>
+                <div class="stat-card-info">
+                    <div class="stat-card-title">Continue Shopping</div>
+                    <div class="stat-card-desc">Browse our latest collections.</div>
+                </div>
+                <i data-lucide="chevron-right" class="stat-card-arrow"></i>
+            </a>
+        </div>
+    </main>
+</div>
+{{else}}
+<div class="account-guest">
+    <div class="account-guest-icon">
+        <i data-lucide="user-circle"></i>
+    </div>
+    <h1 class="account-guest-title">Welcome to Clothes Store</h1>
+    <p class="account-guest-subtitle">Please log in or create an account to access your dashboard.</p>
+    <div class="account-guest-actions">
+        <a href="/login" class="btn">Log In</a>
+        <a href="/register" class="btn btn-outline">Register</a>
+    </div>
+</div>
+{{end}}
+
+<script>lucide.createIcons();</script>
+{{end}}

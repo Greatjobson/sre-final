@@ -78,6 +78,15 @@ func (h *OrderHandler) ListOrdersByUser(c *gin.Context) {
 		userID = c.Query("user_id")
 	}
 	if userID == "" {
+		if role, _ := c.Get("user_role"); role == "admin" {
+			orders, err := h.svc.ListAll(c.Request.Context())
+			if err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+				return
+			}
+			c.JSON(http.StatusOK, orders)
+			return
+		}
 		c.JSON(http.StatusBadRequest, gin.H{"error": "user_id required (query or path)"})
 		return
 	}

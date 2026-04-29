@@ -49,7 +49,7 @@ func RequireAuth(c *gin.Context) {
 
 func RequireAdmin(c *gin.Context) {
 	role, _ := c.Get("user_role")
-	if role != "admin" {
+	if role != "admin" && role != "administrator" {
 		c.AbortWithStatus(http.StatusForbidden)
 		return
 	}

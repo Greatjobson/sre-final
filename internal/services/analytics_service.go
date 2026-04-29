@@ -7,19 +7,19 @@ import (
 	"time"
 
 	"github.com/Tedra-ez/AdvancedProgramming_Final/internal/models"
-	"github.com/Tedra-ez/AdvancedProgramming_Final/internal/repository"
+	repository2 "github.com/Tedra-ez/AdvancedProgramming_Final/internal/repository"
 )
 
 type AnalyticsService struct {
-	orderRepo   repository.OrderStore
-	productRepo repository.ProductStore
-	userRepo    *repository.UserRepository
+	orderRepo   repository2.OrderStore
+	productRepo repository2.ProductStore
+	userRepo    *repository2.UserRepository
 	cacheMu     sync.RWMutex
 	cacheStats  *DashboardStats
 	cacheUntil  time.Time
 }
 
-func NewAnalyticsService(orderRepo repository.OrderStore, productRepo repository.ProductStore, userRepo *repository.UserRepository) *AnalyticsService {
+func NewAnalyticsService(orderRepo repository2.OrderStore, productRepo repository2.ProductStore, userRepo *repository2.UserRepository) *AnalyticsService {
 	return &AnalyticsService{
 		orderRepo:   orderRepo,
 		productRepo: productRepo,
@@ -86,7 +86,7 @@ func (s *AnalyticsService) GetDashboardStats(ctx context.Context) (*DashboardSta
 		productMap[p.ID] = p.Name
 	}
 
-	if mongoRepo, ok := s.orderRepo.(*repository.OrderRepositoryMongo); ok {
+	if mongoRepo, ok := s.orderRepo.(*repository2.OrderRepositoryMongo); ok {
 		summary, revenueByDay, ordersByStatus, err := mongoRepo.AggregateDashboard(ctx)
 		if err != nil {
 			return nil, err
@@ -215,7 +215,7 @@ func (s *AnalyticsService) GetDashboardStats(ctx context.Context) (*DashboardSta
 }
 
 func (s *AnalyticsService) GetRevenueByPeriod(ctx context.Context, startDate, endDate time.Time) ([]DailyRevenue, error) {
-	if mongoRepo, ok := s.orderRepo.(*repository.OrderRepositoryMongo); ok {
+	if mongoRepo, ok := s.orderRepo.(*repository2.OrderRepositoryMongo); ok {
 		revenueByDay, err := mongoRepo.AggregateRevenueByPeriod(ctx, startDate, endDate)
 		if err != nil {
 			return nil, err

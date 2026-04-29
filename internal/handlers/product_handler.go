@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"net/http"
+	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -24,6 +25,9 @@ func (h *ProductHandler) GetProducts(c *gin.Context) {
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
+	}
+	if products == nil {
+		products = []*models.Product{}
 	}
 	c.JSON(http.StatusOK, products)
 }
@@ -70,7 +74,15 @@ func (h *ProductHandler) CreateProduct(c *gin.Context) {
 	file, err := c.FormFile("image")
 	var imagePath string
 	if err == nil {
-		path := filepath.Join("static", "assets", "products", file.Filename)
+		uploadDir := resolveUploadDir(
+			filepath.Join("static", "assets", "products"),
+			filepath.Join("frontend", "static", "assets", "products"),
+		)
+		if err := os.MkdirAll(uploadDir, 0o755); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to prepare image directory"})
+			return
+		}
+		path := filepath.Join(uploadDir, file.Filename)
 		if err := c.SaveUploadedFile(file, path); err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to save image"})
 			return
@@ -132,6 +144,16 @@ func parseStockString(s string) map[string]int {
 		}
 	}
 	return result
+}
+
+func resolveUploadDir(candidates ...string) string {
+	for _, candidate := range candidates {
+		info, err := os.Stat(candidate)
+		if err == nil && info.IsDir() {
+			return candidate
+		}
+	}
+	return candidates[0]
 }
 
 func (h *ProductHandler) UpdateProduct(c *gin.Context) {

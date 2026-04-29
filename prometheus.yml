@@ -10,7 +10,32 @@ scrape_configs:
     static_configs:
       - targets: ['localhost:9090']
 
-  - job_name: 'clothes-store'
+  - job_name: 'frontend'
     static_configs:
-      - targets: ['clothes-store:8080']
+      - targets: ['frontend:8081']
+    metrics_path: /metrics
+
+  - job_name: 'auth-service'
+    static_configs:
+      - targets: ['auth-service:8082']
+    metrics_path: /metrics
+
+  - job_name: 'product-service'
+    static_configs:
+      - targets: ['product-service:8083']
+    metrics_path: /metrics
+
+  - job_name: 'order-service'
+    static_configs:
+      - targets: ['order-service:8084']
+    metrics_path: /metrics
+
+  - job_name: 'user-service'
+    static_configs:
+      - targets: ['user-service:8085']
+    metrics_path: /metrics
+
+  - job_name: 'chat-service'
+    static_configs:
+      - targets: ['chat-service:8086']
     metrics_path: /metrics

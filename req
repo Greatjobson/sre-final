@@ -1,0 +1,188 @@
+Incident Response Simulation and Infrastructure as Code Implementation
+1. Title
+Design and Deployment of a Containerized Microservices System with Terraform-Based
+Infrastructure Provisioning and Incident Response Simulation
+2. Objectives
+The primary objective of this project is to integrate Infrastructure as Code (IaC) principles with
+Site Reliability Engineering (SRE) practices by designing, deploying, and analyzing a
+containerized microservices-based application.
+The project aims to:
+1. Implement a microservices architecture using containerization technologies.
+2. Provision infrastructure using Terraform to ensure reproducibility and automation.
+3. Deploy and orchestrate services using Docker Compose.
+4. Integrate monitoring and observability tools.
+5. Simulate a realistic production-level incident.
+6. Conduct a structured incident response process.
+7. Produce a comprehensive postmortem analysis.
+3. System Requirements
+3.1 Functional Requirements
+The system shall:
+1. Provide a web-based interface for user interaction.
+2. Support user authentication and authorization.
+3. Enable retrieval and display of product data.
+4. Allow users to perform transactional operations (e.g., order creation).
+5. Ensure communication between independent backend services.
+6. Collect and expose system metrics for monitoring.
+7. Detect and log service failures.
+3.2 Non-Functional Requirements
+The system shall:
+1. Ensure scalability through modular microservices.
+2. Maintain fault isolation between services.
+3. Provide observability via metrics and dashboards.
+4. Enable automated deployment using IaC.
+5. Support containerized execution across environments.
+6. Ensure reproducibility of infrastructure and services.
+4. Technology Stack
+The system shall be implemented using the following technologies:
+● Backend: Python (FastAPI) or any other Programming language(that supports
+microservices)
+● Frontend: JavaScript served via Nginx
+● Database: PostgreSQL
+● Containerization: Docker
+● Orchestration: Docker Compose and Stack
+● Monitoring: Prometheus and Grafana
+● Infrastructure as Code: Terraform
+5. System Architecture
+The application follows a microservices-based architecture, consisting of independent services
+communicating over HTTP.
+Core Components
+● Frontend Layer: User interface served via Nginx
+● API Gateway / Reverse Proxy: Request routing
+● Microservices:
+a. Authentication Service
+b. Product Service
+c. Order Service
+d. User Service
+e. Chat between User Service
+● Database Layer: PostgreSQL
+● Monitoring Layer:
+a. Prometheus (metrics collection)
+b. Grafana (visualization)
+6. Infrastructure as Code (Assignment 5)
+6.1 Objective
+To provision the required infrastructure using Terraform in a declarative and reproducible
+manner.
+6.2 Requirements
+The Terraform configuration shall:
+1. Provision a virtual machine (VM) or cloud instance.
+2. Configure network access rules, including:
+a. HTTP (80)
+b. Grafana (3000)
+c. Prometheus (9090)
+d. SSH (22)
+3. Output the public IP address of the instance.
+4. Ensure infrastructure reproducibility using:
+a. terraform init
+b. terraform plan
+c. terraform apply
+6.3 Expected Deliverables
+1. main.tf
+2. variables.tf
+3. outputs.tf
+4. terraform.tfvars
+5. Deployment documentation
+7. Containerized Deployment
+The system shall be deployed using Docker Compose, including:
+1. Frontend container
+2. Backend microservices containers
+3. PostgreSQL database container
+4. Prometheus container
+5. Grafana container
+Each service shall:
+1. Run in an isolated container
+2. Communicate via internal Docker networking
+3. Use environment variables for configuration
+8. Monitoring and Observability
+The system shall integrate monitoring tools:
+1. Prometheus shall collect metrics from services.
+2. Grafana shall visualize system performance.
+3. System health shall be validated via:
+a. Service availability
+b. Metrics endpoints
+c. Dashboard visualization
+9. Incident Response Simulation (Assignment 4)
+9.1 Objective
+To simulate a realistic system failure and evaluate the response process.
+9.2 Incident Scenario
+A failure shall be introduced in the Order Service, caused by incorrect database configuration
+(e.g., invalid connection string or hostname).
+9.3 Requirements
+The simulation shall include:
+1. Incident Detection
+a. Identification through monitoring tools (Grafana/Prometheus)
+b. Observation of system errors or service downtime
+2. Incident Analysis
+a. Examination of logs and container status
+b. Identification of root cause
+3. Incident Mitigation
+a. Correction of configuration errors
+b. Restart of affected services
+4. Service Restoration
+a. Verification of system functionality
+b. Confirmation via metrics and user interface
+9.4 Incident Report Requirements
+The incident report shall include:
+1. Incident summary
+2. Impact assessment
+3. Severity classification
+4. Timeline of events
+5. Root cause analysis
+6. Mitigation steps
+7. Resolution confirmation
+10. Postmortem Analysis
+10.1 Objective
+To evaluate the incident and propose improvements to prevent recurrence.
+10.2 Requirements
+The postmortem document shall include:
+1. Incident Overview
+2. Customer Impact
+3. Root Cause Analysis
+4. Detection and Response Evaluation
+5. Resolution Summary
+6. Lessons Learned
+7. Action Items
+10.3 Action Items
+Action items shall:
+1. Address system weaknesses
+2. Improve monitoring and alerting
+3. Enhance deployment reliability
+4. Reduce future incident risk
+11. Deliverables
+The final submission shall include:
+1. Source Code
+a. Microservices implementation
+b. Frontend application
+2. Container Configuration
+a. docker-compose.yml
+b. Dockerfiles
+3. Infrastructure Code
+a. Terraform configuration files
+4. Documentation
+a. README file with setup instructions
+b. Deployment guide
+5. Assignment 4 Report
+a. Incident response simulation
+b. Postmortem analysis
+6. Assignment 5 Report
+a. Terraform implementation and explanation
+7. Supporting Evidence
+a. Screenshots of:
+i. Running containers
+ii. Grafana dashboards
+iii. Prometheus targets
+iv. System before and after incident
+12. Evaluation Criteria
+The project shall be evaluated based on:
+1. Correct implementation of microservices architecture
+2. Proper use of Docker and containerization
+3. Effective use of Terraform for infrastructure provisioning
+4. Quality and realism of incident simulation
+5. Depth of postmortem analysis
+6. Clarity and completeness of documentation
+7. Demonstration of system functionality
+13. Conclusion
+This project demonstrates the integration of modern DevOps practices, combining
+containerization, infrastructure automation, monitoring, and incident management. It reflects
+real-world workflows in distributed systems and highlights the importance of reliability,
+observability, and structured operational response. Good luck !!! ONLY PDF !!! add screenshots
+for all tasks !!!

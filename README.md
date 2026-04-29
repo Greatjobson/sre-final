@@ -1,10 +1,8 @@
 # Clothes Store
 
-A premium, modern Online store platform built with Go and MongoDB. Features a luxury design aesthetic with a fully functional shopping experience and a comprehensive administrative dashboard.
+A premium, modern online store platform built with Go. The project now includes a microservice-ready deployment topology with Nginx gateway routing across dedicated domain services.
 
 ## Team
-- Yskak Zhanibek
-- Nauanov Alikhan
 - Zhumagali Beibarys
 
 ## Features
@@ -24,11 +22,23 @@ A premium, modern Online store platform built with Go and MongoDB. Features a lu
 
 ## Tech Stack
 
-- **Backend**: Go (Gin Web Framework)
-- **Database**: MongoDB
+- **Backend API**: Go (Gin Web Framework)
+- **Frontend Web**: Go-rendered templates + static assets (served by a separate web service)
+- **Gateway / Reverse Proxy**: Nginx
+- **Database**: MongoDB for application data + PostgreSQL container provisioned for assignment requirements/migration
 - **Authentication**: JWT (JSON Web Tokens) with Secure Cookies
 - **Frontend**: Semantic HTML5, Vanilla CSS (Modern CSS variables), JavaScript (ES6+)
 - **Icons**: Lucide Icons
+
+## Microservices Topology (Docker Compose)
+
+- `gateway` (Nginx): single entry point and route dispatcher.
+- `auth-service`: `/auth/*`
+- `product-service`: `/api/product*`
+- `order-service`: `/orders*`
+- `user-service`: `/api/users*`
+- `chat-service`: `/chat*`
+- `frontend`: web UI service behind gateway.
 
 ## Database Performance
 
@@ -39,43 +49,117 @@ A premium, modern Online store platform built with Go and MongoDB. Features a lu
 ## Project Structure
 
 ```bash
-├── cmd/
-│   └── server/          # Entry point (main.go)
-├── internal/
-│   ├── api/             # Routing and Middleware
-│   ├── config/          # Environment configuration
-│   ├── db/              # Database connection
-│   ├── handlers/        # HTTP Handlers
-│   ├── models/          # Data structures
-│   ├── repository/      # Database operations
-│   └── services/        # Business logic
-├── static/
-│   ├── assets/          # Images, Banners, UI elements
-│   ├── css/             # Stylesheets
-│   └── js/              # Client-side logic
-└── templates/           # HTML fragments
+├── auth-service/
+│   ├── cmd/server/main.go
+│   └── internal/{domain,usecase,ports,adapters}
+├── product-service/
+│   ├── cmd/server/main.go
+│   └── internal/{domain,usecase,ports,adapters}
+├── order-service/
+│   ├── cmd/server/main.go
+│   └── internal/{domain,usecase,ports,adapters}
+├── user-service/
+│   ├── cmd/server/main.go
+│   └── internal/{domain,usecase,ports,adapters}
+├── chat-service/
+│   ├── cmd/server/main.go
+│   └── internal/{domain,usecase,ports,adapters}
+├── backend/
+│   └── Dockerfile       # Builds all backend service binaries
+├── frontend/
+│   └── Dockerfile       # Frontend container build
+├── gateway/
+│   └── nginx.conf       # API gateway routing
+├── grafana/
+│   ├── dashboards/
+│   └── provisioning/
+├── terraform/
+│   ├── main.tf
+│   ├── variables.tf
+│   ├── outputs.tf
+│   └── terraform.tfvars
+└── docs/
+    ├── deployment-guide.md
+    ├── assignment4-incident-response.md
+    ├── postmortem.md
+    └── assignment5-terraform-report.md
 ```
 
 ## Setup & Installation
 
 ### Prerequisites
-- Go 1.25+
-- MongoDB instance
+- Docker Desktop or Docker Engine with Docker Compose plugin
+- Go 1.24+ for local tests
+- Terraform 1.6+ for Assignment 5 infrastructure provisioning
 
 ### 1. Environment Configuration
 Create a `.env` file in the root directory:
 ```env
-PORT=8000
-MONGODB_URI=Nelzya
-JWT_SECRET=No
-ADMIN_EMAIL=No
+JWT_SECRET=dev_secret_change_me
+ADMIN_EMAIL=admin@example.com
 ```
 
-### 2. Run the Application
+### 2. Run Tests
 ```bash
-go run cmd/server/main.go
+go test ./...
 ```
-The server will start at http://localhost:8000.
+
+### 3. Run with Docker Compose
+```bash
+docker compose up -d --build
+```
+- Gateway (single entrypoint): http://localhost:8080
+- Frontend (direct access): http://localhost:8081
+- Auth API via gateway: http://localhost:8080/auth
+- Product API via gateway: http://localhost:8080/api/product
+- Order API via gateway: http://localhost:8080/orders
+- User API via gateway: http://localhost:8080/api/users
+- Chat API via gateway: http://localhost:8080/chat/messages
+- MongoDB: localhost:27017
+- PostgreSQL: localhost:5432
+- Prometheus: http://localhost:9090
+- Grafana: http://localhost:3000
+- Grafana login: `admin` / `admin`
+
+Docker build files:
+- `frontend/Dockerfile` for web service
+- `backend/Dockerfile` for backend service binaries
+
+## Monitoring
+
+- Prometheus scrapes every application service through `/metrics`.
+- Grafana is automatically provisioned with the Prometheus datasource.
+- Grafana includes the `Clothes Store Overview` dashboard.
+- Alerts are defined in `alerts.yml`, including high latency, high error rate, and service down detection.
+
+## Terraform Infrastructure
+
+Terraform files are in `terraform/`.
+
+```bash
+cd terraform
+terraform init
+terraform plan
+terraform apply
+```
+
+Before applying on Google Cloud, run `gcloud auth application-default login` and update `terraform/terraform.tfvars` with your `project_id`, zone, SSH public key, and optional repository URL.
+
+## Incident Simulation
+
+The order-service incident is simulated with an invalid database hostname:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.incident.yml up -d order-service
+```
+
+Restore normal configuration:
+
+```bash
+docker compose -f docker-compose.yml up -d order-service
+```
+
+Reports and PDF source material are in `docs/`.
 
 ## API Documentation
 
@@ -113,7 +197,7 @@ The server will start at http://localhost:8000.
 - **POST** `/api/product` (admin, multipart/form-data)
   - Example:
     ```bash
-    curl -X POST http://localhost:8000/api/product \
+    curl -X POST http://localhost:8080/api/product \
       -H "Authorization: Bearer <token>" \
       -F "name=Sneakers" -F "price=120" -F "category=shoes" \
       -F "gender=unisex" -F "sizes=41,42" -F "colors=black" \
