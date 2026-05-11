@@ -33,6 +33,9 @@ func main() {
 	server.GET("/ping", func(c *gin.Context) {
 		c.JSON(200, gin.H{"msg": "pong"})
 	})
+	server.GET("/health", func(c *gin.Context) {
+		c.JSON(200, gin.H{"status": "ok", "service": "backend"})
+	})
 	if cfg.MongoURI == "" {
 		log.Fatalf("error when connecting to mongo, please specify MONGODB_URI in .env")
 	}

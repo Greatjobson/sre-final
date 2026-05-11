@@ -2,8 +2,9 @@ services:
   gateway:
     image: nginx:1.27-alpine
     container_name: gateway
+    restart: unless-stopped
     ports:
-      - "8080:80"
+      - "80:80"
     volumes:
       - ./gateway/nginx.conf:/etc/nginx/nginx.conf:ro
     depends_on:
@@ -14,7 +15,7 @@ services:
       - user-service
       - chat-service
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1/ping >/dev/null 2>&1 || exit 1"]
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1/health >/dev/null 2>&1 || exit 1"]
       interval: 15s
       timeout: 5s
       retries: 3
@@ -25,16 +26,17 @@ services:
       context: .
       dockerfile: backend/Dockerfile
     container_name: auth-service
+    restart: unless-stopped
     command: ["/app/bin/auth-service"]
     environment:
       - BACKEND_PORT=8082
       - MONGODB_URI=mongodb://mongo:27017
-      - JWT_SECRET=dev_secret_change_me
+      - JWT_SECRET=${JWT_SECRET:?JWT_SECRET is required}
       - FRONTEND_ORIGIN=*
     depends_on:
       - mongo
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:8082/ping >/dev/null 2>&1 || exit 1"]
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8082/health >/dev/null 2>&1 || exit 1"]
       interval: 15s
       timeout: 5s
       retries: 3
@@ -45,18 +47,19 @@ services:
       context: .
       dockerfile: backend/Dockerfile
     container_name: product-service
+    restart: unless-stopped
     command: ["/app/bin/product-service"]
     environment:
       - BACKEND_PORT=8083
       - MONGODB_URI=mongodb://mongo:27017
-      - JWT_SECRET=dev_secret_change_me
+      - JWT_SECRET=${JWT_SECRET:?JWT_SECRET is required}
       - FRONTEND_ORIGIN=*
     depends_on:
       - mongo
     volumes:
       - product-images:/app/static/assets/products
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:8083/ping >/dev/null 2>&1 || exit 1"]
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8083/health >/dev/null 2>&1 || exit 1"]
       interval: 15s
       timeout: 5s
       retries: 3
@@ -67,16 +70,17 @@ services:
       context: .
       dockerfile: backend/Dockerfile
     container_name: order-service
+    restart: unless-stopped
     command: ["/app/bin/order-service"]
     environment:
       - BACKEND_PORT=8084
       - MONGODB_URI=mongodb://mongo:27017
-      - JWT_SECRET=dev_secret_change_me
+      - JWT_SECRET=${JWT_SECRET:?JWT_SECRET is required}
       - FRONTEND_ORIGIN=*
     depends_on:
       - mongo
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:8084/ping >/dev/null 2>&1 || exit 1"]
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8084/health >/dev/null 2>&1 || exit 1"]
       interval: 15s
       timeout: 5s
       retries: 3
@@ -87,16 +91,17 @@ services:
       context: .
       dockerfile: backend/Dockerfile
     container_name: user-service
+    restart: unless-stopped
     command: ["/app/bin/user-service"]
     environment:
       - BACKEND_PORT=8085
       - MONGODB_URI=mongodb://mongo:27017
-      - JWT_SECRET=dev_secret_change_me
+      - JWT_SECRET=${JWT_SECRET:?JWT_SECRET is required}
       - FRONTEND_ORIGIN=*
     depends_on:
       - mongo
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:8085/ping >/dev/null 2>&1 || exit 1"]
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8085/health >/dev/null 2>&1 || exit 1"]
       interval: 15s
       timeout: 5s
       retries: 3
@@ -107,13 +112,14 @@ services:
       context: .
       dockerfile: backend/Dockerfile
     container_name: chat-service
+    restart: unless-stopped
     command: ["/app/bin/chat-service"]
     environment:
       - BACKEND_PORT=8086
-      - JWT_SECRET=dev_secret_change_me
+      - JWT_SECRET=${JWT_SECRET:?JWT_SECRET is required}
       - FRONTEND_ORIGIN=*
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:8086/ping >/dev/null 2>&1 || exit 1"]
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8086/health >/dev/null 2>&1 || exit 1"]
       interval: 15s
       timeout: 5s
       retries: 3
@@ -124,6 +130,7 @@ services:
       context: .
       dockerfile: frontend/Dockerfile
     container_name: frontend
+    restart: unless-stopped
     ports:
       - "8081:8081"
     environment:
@@ -134,7 +141,7 @@ services:
       - USER_SERVICE_URL=http://user-service:8085
       - CHAT_SERVICE_URL=http://chat-service:8086
       - ANALYTICS_SERVICE_URL=http://order-service:8084
-      - JWT_SECRET=dev_secret_change_me
+      - JWT_SECRET=${JWT_SECRET:?JWT_SECRET is required}
     depends_on:
       - auth-service
       - product-service
@@ -144,7 +151,7 @@ services:
     volumes:
       - product-images:/app/static/assets/products
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:8081/ping >/dev/null 2>&1 || exit 1"]
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8081/health >/dev/null 2>&1 || exit 1"]
       interval: 15s
       timeout: 5s
       retries: 3
@@ -164,17 +171,29 @@ services:
     container_name: postgres
     restart: unless-stopped
     environment:
-      - POSTGRES_DB=clothes_store
-      - POSTGRES_USER=clothes
-      - POSTGRES_PASSWORD=clothes_dev_password
+      - POSTGRES_DB=${POSTGRES_DB:?POSTGRES_DB is required}
+      - POSTGRES_USER=${POSTGRES_USER:?POSTGRES_USER is required}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
     ports:
       - "5432:5432"
     volumes:
       - postgres-data:/var/lib/postgresql/data
 
+  node-exporter:
+    image: prom/node-exporter:latest
+    container_name: node-exporter
+    restart: unless-stopped
+    command:
+      - '--path.rootfs=/host'
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($|/)'
+    volumes:
+      - /:/host:ro
+    pid: host
+
   prometheus:
     image: prom/prometheus:latest
     container_name: prometheus
+    restart: unless-stopped
     ports:
       - "9090:9090"
     volumes:
@@ -189,10 +208,12 @@ services:
       - order-service
       - user-service
       - chat-service
+      - node-exporter
 
   grafana:
     image: grafana/grafana:latest
     container_name: grafana
+    restart: unless-stopped
     ports:
       - "3000:3000"
     environment:

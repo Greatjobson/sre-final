@@ -1,303 +1,238 @@
-# 1. Титульный лист (Title Page)
+# Automation in Site Reliability Engineering and Capacity Planning
 
-**Учебное заведение / курс:**  
-[Укажите университет], [Укажите курс/дисциплину]
+## 1. Title Page
 
-**Тема:**  
-Design and Deployment of a Containerized Microservices System with Terraform and Incident Response Simulation
+**University / Course:**  
+[Your university], [Course name]
 
-**Студент / группа:**  
-[Ваше ФИО], [Ваша группа]
+**Assignment title:**  
+Automation and Capacity Planning in a Containerized Microservices System Following Incident Response and Infrastructure Provisioning
 
-**Дата:**  
-[Укажите дату]
+**Student / Group:**  
+[Your full name], [Your group]
 
----
-
-# 2. Введение (Introduction)
-
-## Краткое описание проекта
-
-**Clothes Store** — это контейнеризированная микросервисная e-commerce система, построенная на Go (Gin), с единым API Gateway (Nginx), отдельными доменными сервисами (Auth, Product, Order, User, Chat), веб-фронтендом, мониторингом (Prometheus + Grafana) и инфраструктурой как код (Terraform для AWS EC2).
-
-## Цели и задачи
-
-1. Спроектировать и реализовать микросервисную архитектуру интернет-магазина.
-2. Контейнеризировать все компоненты через Docker и оркестрировать запуск через Docker Compose.
-3. Реализовать мониторинг и алертинг для ключевых сервисов и метрик.
-4. Описать инфраструктуру в Terraform и автоматизировать развертывание VM.
-5. Провести симуляцию инцидента (отказ Order Service), выполнить обнаружение, анализ и восстановление.
-6. Подготовить постмортем и список профилактических action items.
+**Date:**  
+[Submission date]
 
 ---
 
-# 3. Архитектура системы (System Architecture)
+## 2. What this report covers
 
-## Схема архитектуры
+This report documents:
 
-```mermaid
-flowchart LR
-    U[User Browser] --> G[Nginx Gateway :8080]
-    U --> F[Frontend Service :8081]
-    G --> A[Auth Service :8082]
-    G --> P[Product Service :8083]
-    G --> O[Order Service :8084]
-    G --> US[User Service :8085]
-    G --> C[Chat Service :8086]
-
-    A --> M[(MongoDB :27017)]
-    P --> M
-    O --> M
-    US --> M
-
-    O -. assignment DB / migration support .-> PG[(PostgreSQL :5432)]
-
-    PR[Prometheus :9090] --> A
-    PR --> P
-    PR --> O
-    PR --> US
-    PR --> C
-    PR --> F
-    GR[Grafana :3000] --> PR
-```
-
-## Описание стека и обоснование
-
-- **Backend: Go + Gin** — высокая производительность, простая сборка в один бинарник, удобен для микросервисов.  
-  > Примечание: в этой реализации используется **Go/Gin** (не FastAPI).
-- **Frontend:** Go templates + HTML/CSS/JS — легковесный UI без тяжелого SPA-фреймворка.
-- **Gateway: Nginx** — единая точка входа, маршрутизация запросов к сервисам.
-- **Databases:** MongoDB (основные данные приложения), PostgreSQL (доп. контейнер для требований задания/миграционных сценариев).
-- **Containerization:** Docker + Docker Compose — воспроизводимость окружения и быстрый локальный/серверный запуск.
-- **IaC:** Terraform — декларативное и повторяемое развертывание инфраструктуры.
-- **Monitoring:** Prometheus + Grafana + alerts.yml — наблюдаемость и оперативное обнаружение деградаций.
-
-## Скриншоты (опционально)
-
-- _(Вставьте скриншот структуры проекта в IDE)_
+1. SRE automation improvements implemented in the project.
+2. Monitoring-based alerting for reliability risks.
+3. Capacity planning execution using repeatable load tests and metrics.
+4. Scaling recommendations based on measured behavior.
 
 ---
 
-# 4. Инфраструктура как код (Assignment 5: Terraform)
+## 3. Quick definitions (important)
 
-## Описание ресурсов
+### 3.1 What is **pre-deploy**?
 
-Terraform-конфигурация создает:
+**Pre-deploy** means checks performed **before** `docker compose up` to prevent bad configuration from reaching runtime.
 
-1. **EC2 VM (Ubuntu 22.04)** с публичным IP.
-2. **Security Group** с входящими правилами для SSH (22), HTTP (80), gateway (8080), Grafana (3000), Prometheus (9090).
-3. **Cloud-init / user_data** для установки Docker Engine + Docker Compose plugin и опционального деплоя репозитория.
-
-## Конфигурация (сокращенно)
-
-### `terraform/main.tf` (фрагмент)
-```hcl
-resource "aws_security_group" "app" {
-  # ingress 22, 80, 8080, 3000, 9090
-}
-
-resource "aws_instance" "app" {
-  ami           = data.aws_ami.ubuntu.id
-  instance_type = var.instance_type
-  key_name      = var.key_name
-  user_data     = templatefile("${path.module}/user_data.sh.tftpl", { ... })
-}
-```
-
-### `terraform/variables.tf` (фрагмент)
-```hcl
-variable "aws_region"   { default = "us-east-1" }
-variable "instance_type"{ default = "t3.micro" }
-variable "app_ports"    { default = [80, 8080, 3000, 9090] }
-variable "key_name"     { type = string }
-```
-
-### `terraform/outputs.tf` (фрагмент)
-```hcl
-output "public_ip"      { value = aws_instance.app.public_ip }
-output "app_url"        { value = "http://${aws_instance.app.public_ip}:8080" }
-output "prometheus_url" { value = "http://${aws_instance.app.public_ip}:9090" }
-output "grafana_url"    { value = "http://${aws_instance.app.public_ip}:3000" }
-```
-
-## Процесс развертывания
+In this project, pre-deploy checks are automated by:
 
 ```bash
-cd terraform
-terraform init
-terraform plan
-terraform apply
+./scripts/predeploy-check.sh
 ```
 
-## Результат
+It validates:
 
-После `terraform apply` выводятся:
+- required `.env` variables exist,
+- compose syntax is valid,
+- required services exist,
+- no known bad DB hostname (`wrong-mongo-host`) in main compose file,
+- healthcheck paths are configured.
 
-- `public_ip = <PUBLIC_IP>`
-- `app_url = http://<PUBLIC_IP>:8080`
-- `prometheus_url = http://<PUBLIC_IP>:9090`
-- `grafana_url = http://<PUBLIC_IP>:3000`
+### 3.2 What is **load / overload**?
 
-## Скриншоты
+- **Load test** = sending many requests concurrently to measure behavior under stress.
+- **Overload** = when load exceeds system capacity and errors/latency increase.
 
-1. _(Терминал с успешным `terraform apply`)_
-2. _(Панель AWS/GCP/Azure/DO с созданной VM и публичным IP)_
+In this project, load is generated by:
 
----
-
-# 5. Контейнеризация и оркестрация (Docker & Docker Compose)
-
-## Описание `docker-compose.yml`
-
-Система запускает сервисы:
-
-- `gateway` (Nginx)
-- `frontend`
-- `auth-service`
-- `product-service`
-- `order-service`
-- `user-service`
-- `chat-service`
-- `mongo`
-- `postgres`
-- `prometheus`
-- `grafana`
-
-## Сети и переменные окружения
-
-- Взаимодействие сервисов выполняется через внутреннюю Docker-сеть по service-name DNS (например, `mongo`, `order-service`).
-- Ключевые переменные: `MONGODB_URI`, `JWT_SECRET`, `BACKEND_PORT`, URL внутренних сервисов для frontend.
-- Gateway пробрасывается наружу на `8080`, frontend — `8081`.
-
-## Скриншоты
-
-1. _(Вывод `docker ps -a`, все нужные контейнеры в статусе Up)_
-2. _(Главная страница frontend в браузере)_
+```bash
+./scripts/load-sim.sh
+./scripts/capacity-run.sh
+```
 
 ---
 
-# 6. Мониторинг и наблюдаемость (Monitoring)
+## 4. Implemented automation and SRE mechanisms
 
-## Настройка Prometheus
+### 4.1 Automated deployment
 
-В `prometheus.yml` настроены `scrape_configs` для:
+- Docker Compose for consistent multi-service deployment.
+- Terraform for infrastructure provisioning.
+- Environment-driven config via `.env` / `.env.example`.
 
-- `frontend:8081/metrics`
-- `auth-service:8082/metrics`
-- `product-service:8083/metrics`
-- `order-service:8084/metrics`
-- `user-service:8085/metrics`
-- `chat-service:8086/metrics`
+### 4.2 Health checks and self-healing
 
-Алерты в `alerts.yml`:
+- Services expose `/health`.
+- Compose health checks are configured per service.
+- Restart policy: `restart: unless-stopped`.
 
-- `HighLatencyWarning`
-- `HighErrorRateCritical`
+### 4.3 Monitoring-based alerting
+
+Prometheus + alert rules in `alerts.yml`:
+
 - `ServiceDown`
+- `HighErrorRateCritical`
+- `HighCPUUsageCritical`
+- `HighLatencyWarning`
+- `ServiceRestartLoopWarning`
 
-## Настройка Grafana
+### 4.4 Log-based troubleshooting automation
 
-- Datasource: `Prometheus` (`http://prometheus:9090`)
-- Автопровижининг dashboard-провайдера: `Clothes Store Dashboards`
-- Основной дашборд: **Clothes Store Overview**
-- Примеры панелей: `Services Up`, `Error Rate`, `P95 Latency`, `Request Rate by Service`, `Service Availability`
+`./scripts/log-check.sh` scans logs for:
 
-## Скриншоты
+- DB connection failures,
+- restart-loop indicators.
 
-1. _(Prometheus Targets, все сервисы со статусом UP)_
-2. _(Grafana Dashboard с ключевыми графиками)_
+### 4.5 Configuration validation
+
+`./scripts/predeploy-check.sh` is used as a pre-deployment safety gate.
 
 ---
 
-# 7. Симуляция инцидента (Assignment 4: Incident Response)
+## 5. Step-by-step execution (what you must do)
 
-## Сценарий
+> Run these on the host where Docker Compose stack is running.
 
-Инцидент создан через override-файл `docker-compose.incident.yml`, где для `order-service` задан неверный URI БД:
-
-```env
-MONGODB_URI=mongodb://wrong-mongo-host:27017
-```
-
-Команда симуляции:
+### Step 1 — Prepare environment
 
 ```bash
-docker compose -f docker-compose.yml -f docker-compose.incident.yml up -d order-service
+cp .env.example .env
+# fill real values in .env
 ```
 
-## Detection
+### Step 2 — Run pre-deploy checks
 
-Признаки инцидента:
+```bash
+chmod +x scripts/*.sh
+./scripts/predeploy-check.sh
+```
 
-- деградация/падение `order-service` в мониторинге;
-- ошибки 5xx на order endpoints;
-- падение показателей availability для order-service.
+Take screenshot: successful pre-deploy output.
 
-Проверка:
+### Step 3 — Start/restart stack
+
+```bash
+docker compose up -d --build
+docker compose ps
+```
+
+Take screenshot: `docker compose ps` with running services.
+
+### Step 4 — Verify health and monitoring
 
 ```bash
 docker compose ps
-docker compose logs order-service
 ```
 
-## Analysis
+Open:
 
-Логи подтверждают ошибку подключения к MongoDB из-за неверного hostname (service DNS не резолвится):
+- `http://localhost:9090/targets` (Prometheus Targets)
+- `http://localhost:9090/alerts` (Prometheus Alerts)
+- `http://localhost:3000` (Grafana)
 
-```text
-dial tcp: lookup wrong-mongo-host on 127.0.0.11:53: no such host
-```
+Take screenshots: Targets, Alerts, Grafana dashboard.
 
-## Mitigation
-
-Восстановление конфигурации и перезапуск сервиса:
+### Step 5 — Run load simulation (capacity test)
 
 ```bash
-docker compose -f docker-compose.yml up -d order-service
+BASE_URL=http://localhost REQUESTS=600 CONCURRENCY=30 ./scripts/capacity-run.sh
 ```
 
-После фикса `order-service` снова становится доступным, графики и метрики возвращаются к норме.
+Take screenshot: terminal output of `capacity-run.sh`.
 
-## Скриншоты
+### Step 6 — Collect metric snapshot
 
-1. _(График Grafana с провалом во время инцидента)_
-2. _(Логи ошибки в терминале)_
-3. _(Графики после восстановления)_
+```bash
+./scripts/capacity-metrics.sh
+```
 
----
+Take screenshot: metrics snapshot output.
 
-# 8. Постмортем анализ (Postmortem Analysis)
+### Step 7 — Run automated log analysis
 
-## Summary
+```bash
+./scripts/log-check.sh 15m
+```
 
-В ходе симуляции произошел отказ `order-service` из-за ошибки конфигурации `MONGODB_URI`. По timeline инцидента сервис был недоступен в пределах короткого окна восстановления (порядка нескольких минут).
-
-## Impact
-
-Затронуты пользователи, выполнявшие операции заказа:
-
-- создание заказа;
-- просмотр истории заказов;
-- проверка статуса заказа.
-
-Остальные функции (каталог, auth, user, chat) оставались доступными.
-
-## Root Cause
-
-- Основная причина: человеческая ошибка в конфигурации окружения (неверный hostname БД).
-- Сопутствующие факторы: отсутствие предварительной валидации конфигов и readiness-проверки зависимости БД до rollout.
-
-## Action Items
-
-1. Добавить startup/readiness проверку соединения с БД в каждом backend-сервисе.
-2. Добавить CI-проверки обязательных переменных окружения и формата URI.
-3. Ограничить `ssh_cidr` в Terraform до доверенного IP диапазона.
-4. Усилить алертинг по `ServiceDown` и error-rate для критичных сервисов.
-5. Регулярно проводить game day / incident simulation перед релизом.
+Take screenshot: log-check result.
 
 ---
 
-# 9. Заключение (Conclusion)
+## 6. Capacity planning results table (fill with your numbers)
 
-В рамках работы была реализована и проанализирована полноценная микросервисная система с практиками IaC и SRE: от инфраструктуры (Terraform) и контейнеризации (Docker Compose) до наблюдаемости (Prometheus/Grafana) и управления инцидентами (симуляция, диагностика, восстановление, постмортем).  
-Ключевой результат — подтверждение, что автоматизированное развертывание и заранее подготовленные процедуры мониторинга/response существенно сокращают время обнаружения и устранения отказов.
+| Scenario | Concurrency | Requests | Throughput (req/sec) | Error rate (%) | CPU usage (%) | Memory usage (%) | Restart frequency |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Baseline | - | - | [fill] | [fill] | [fill] | [fill] | [fill] |
+| Homepage (`/`) | [fill] | [fill] | [fill] | [fill] | [fill] | [fill] | [fill] |
+| Product API (`/api/product`) | [fill] | [fill] | [fill] | [fill] | [fill] | [fill] | [fill] |
+| Auth refresh (`/auth/refresh`) | [fill] | [fill] | [fill] | [fill] | [fill] | [fill] | [fill] |
+
+---
+
+## 7. Analysis (write this based on your measurements)
+
+### 7.1 Observations under load
+
+- CPU usage trend: [fill]
+- Memory utilization trend: [fill]
+- Request rate and error behavior: [fill]
+- Most resource-intensive component: [fill, usually order-related path if observed]
+
+### 7.2 Capacity conclusion
+
+- Maximum sustainable throughput before noticeable degradation: [fill]
+- Failure threshold symptoms (latency/errors/restarts): [fill]
+
+---
+
+## 8. Scaling strategy
+
+### 8.1 Horizontal scaling
+
+- Scale stateless services (priority: `order-service` and high-traffic APIs).
+- Add/adjust load balancing policy at gateway/orchestrator level.
+
+### 8.2 Vertical scaling
+
+- Increase VM/container CPU and memory when sustained CPU/memory thresholds are exceeded.
+- Apply infra changes through Terraform.
+
+### 8.3 Database optimization
+
+- Query/index optimization for critical paths.
+- Connection and resource tuning.
+
+### 8.4 Auto-scaling considerations
+
+- Metric-driven scaling triggers (CPU, latency, error rate).
+- Future migration path to orchestrator-native autoscaling (e.g., Kubernetes HPA).
+
+---
+
+## 9. Required screenshot checklist (for PDF submission)
+
+1. Pre-deploy check success (`predeploy-check.sh`)
+2. `docker compose ps` with service status
+3. Prometheus Targets page
+4. Prometheus Alerts/Rules page
+5. Grafana dashboard in normal state
+6. Load test execution output (`capacity-run.sh`)
+7. Capacity metrics snapshot (`capacity-metrics.sh`)
+8. Log automation output (`log-check.sh`)
+9. Grafana during/after load (showing metric changes)
+10. Recovery evidence after incident scenario (from Assignment 4 continuity)
+
+---
+
+## 10. Final conclusion
+
+The system now includes practical SRE automation for deployment validation, health-based recovery, monitoring-driven alerting, and scripted troubleshooting. Capacity planning is executed through repeatable load simulations and Prometheus-based measurements, enabling evidence-based scaling decisions and stronger operational resilience.

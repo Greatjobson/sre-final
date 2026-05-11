@@ -38,6 +38,7 @@ func main() {
 	registerAPIProxies(server, cfg)
 	server.GET("/metrics", gin.WrapH(promhttp.Handler()))
 	server.GET("/ping", func(c *gin.Context) { c.JSON(http.StatusOK, gin.H{"msg": "pong"}) })
+	server.GET("/health", func(c *gin.Context) { c.JSON(http.StatusOK, gin.H{"status": "ok", "service": "frontend"}) })
 	server.Static("/static", staticDir)
 
 	templateDir, err := mustResolveDir("templates", filepath.Join("frontend", "templates"))

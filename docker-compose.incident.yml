@@ -3,5 +3,5 @@ services:
     environment:
       - BACKEND_PORT=8084
       - MONGODB_URI=mongodb://wrong-mongo-host:27017
-      - JWT_SECRET=dev_secret_change_me
+      - JWT_SECRET=${JWT_SECRET:?JWT_SECRET is required}
       - FRONTEND_ORIGIN=*

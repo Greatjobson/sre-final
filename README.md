@@ -93,10 +93,14 @@ A premium, modern online store platform built with Go. The project now includes 
 - Terraform 1.6+ for Assignment 5 infrastructure provisioning
 
 ### 1. Environment Configuration
-Create a `.env` file in the root directory:
+Create a `.env` file in the root directory (you can copy from `.env.example`):
 ```env
-JWT_SECRET=dev_secret_change_me
+JWT_SECRET=replace_with_strong_random_secret
 ADMIN_EMAIL=admin@example.com
+POSTGRES_DB=clothes_store
+POSTGRES_USER=clothes
+POSTGRES_PASSWORD=replace_with_strong_postgres_password
+GRAFANA_ADMIN_PASSWORD=replace_with_strong_grafana_password
 ```
 
 ### 2. Run Tests
@@ -108,13 +112,13 @@ go test ./...
 ```bash
 docker compose up -d --build
 ```
-- Gateway (single entrypoint): http://localhost:8080
+- Gateway (single entrypoint): http://localhost
 - Frontend (direct access): http://localhost:8081
-- Auth API via gateway: http://localhost:8080/auth
-- Product API via gateway: http://localhost:8080/api/product
-- Order API via gateway: http://localhost:8080/orders
-- User API via gateway: http://localhost:8080/api/users
-- Chat API via gateway: http://localhost:8080/chat/messages
+- Auth API via gateway: http://localhost/auth
+- Product API via gateway: http://localhost/api/product
+- Order API via gateway: http://localhost/orders
+- User API via gateway: http://localhost/api/users
+- Chat API via gateway: http://localhost/chat/messages
 - MongoDB: localhost:27017
 - PostgreSQL: localhost:5432
 - Prometheus: http://localhost:9090
@@ -128,9 +132,28 @@ Docker build files:
 ## Monitoring
 
 - Prometheus scrapes every application service through `/metrics`.
+- Prometheus also scrapes host metrics from `node-exporter` (`node-exporter:9100`) for system-level telemetry.
 - Grafana is automatically provisioned with the Prometheus datasource.
 - Grafana includes the `Clothes Store Overview` dashboard.
-- Alerts are defined in `alerts.yml`, including high latency, high error rate, and service down detection.
+- Alerts are defined in `alerts.yml`, including high latency, high error rate, service down, high CPU usage, and restart loop warning.
+
+## SRE Automation & Capacity Planning
+
+Operational scripts are available in `scripts/`:
+
+- `scripts/predeploy-check.sh` — validates compose config, required services, health checks, and env keys before deployment.
+- `scripts/log-check.sh` — scans recent `docker compose logs` for DB failures and restart-loop patterns.
+- `scripts/load-sim.sh` — concurrent request load simulation for a selected endpoint.
+- `scripts/capacity-metrics.sh` — snapshot of CPU, memory, request rate, error rate, and restart frequency from Prometheus.
+- `scripts/capacity-run.sh` — end-to-end capacity run (pre-load metrics, load scenarios, post-load metrics).
+
+Example:
+
+```bash
+./scripts/predeploy-check.sh
+./scripts/capacity-run.sh
+./scripts/log-check.sh 15m
+```
 
 ## Terraform Infrastructure
 

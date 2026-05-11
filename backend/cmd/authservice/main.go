@@ -40,6 +40,7 @@ func main() {
 	server.Use(gin.Recovery(), middleware.CORS(cfg.FrontendOrigin), middleware.Metrics(), middleware.Logger())
 	server.GET("/metrics", gin.WrapH(promhttp.Handler()))
 	server.GET("/ping", func(c *gin.Context) { c.JSON(200, gin.H{"msg": "pong"}) })
+	server.GET("/health", func(c *gin.Context) { c.JSON(200, gin.H{"status": "ok", "service": "auth-service"}) })
 
 	auth := server.Group("/auth")
 	{
