@@ -5,7 +5,7 @@ output "public_ip" {
 
 output "app_url" {
   description = "Application URL through the gateway."
-  value       = "http://${google_compute_address.app.address}:8080"
+  value       = "http://${google_compute_address.app.address}"
 }
 
 output "http_80_url" {
