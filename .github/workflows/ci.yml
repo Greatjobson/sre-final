@@ -1,0 +1,159 @@
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: ["**"]
+  workflow_dispatch:
+
+# Cancel duplicate runs on the same ref to save minutes
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  go-build:
+    name: Go build & vet
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Download modules
+        run: go mod download
+
+      - name: go vet (all packages)
+        run: go vet ./...
+
+      - name: Build all services
+        run: |
+          mkdir -p bin
+          for svc in auth-service product-service order-service user-service chat-service notification-service frontend; do
+            echo "==> building $svc"
+            CGO_ENABLED=0 GOOS=linux GOARCH=amd64 \
+              go build -o "bin/$svc" "./$svc/cmd/server"
+          done
+
+      - name: Run tests (if any)
+        # `-count=1` disables test cache; `|| true` is intentionally NOT used —
+        # if real tests are added later, failing ones should break the build.
+        # `go test ./...` exits 0 when no test files exist, so this is safe today.
+        run: go test -count=1 ./...
+
+  docker-build:
+    name: Docker images build (no push)
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    needs: go-build
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Validate docker-compose
+        run: |
+          # JWT_SECRET is referenced with `:?` in compose; export a dummy one
+          # so `docker compose config` doesn't fail in CI.
+          export JWT_SECRET=ci-dummy
+          export POSTGRES_DB=clothes_store
+          export POSTGRES_USER=clothes
+          export POSTGRES_PASSWORD=ci-dummy
+          docker compose -f docker-compose.yml config -q
+          echo "docker-compose.yml: OK"
+
+      - name: Build backend image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: backend/Dockerfile
+          push: false
+          tags: clothes-store-backend:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build frontend image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: frontend/Dockerfile
+          push: false
+          tags: clothes-store-frontend:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  k8s-validate:
+    name: Kubernetes manifests validation
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install kubeconform
+        run: |
+          curl -sSL -o kubeconform.tar.gz \
+            https://github.com/yannh/kubeconform/releases/download/v0.6.7/kubeconform-linux-amd64.tar.gz
+          tar -xzf kubeconform.tar.gz
+          sudo mv kubeconform /usr/local/bin/
+
+      - name: Validate k8s manifests
+        # `-strict` catches duplicates; `-ignore-missing-schemas` allows CRDs.
+        run: |
+          kubeconform -strict -ignore-missing-schemas -summary k8s/
+
+  ansible-lint:
+    name: Ansible playbook syntax check
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Ansible
+        run: |
+          python3 -m pip install --upgrade pip
+          pip3 install "ansible-core>=2.16"
+
+      - name: Syntax check playbook
+        run: |
+          # We don't have a real inventory in CI — use the example one,
+          # which is fine for --syntax-check (it doesn't connect anywhere).
+          ansible-playbook \
+            -i ansible/inventory.example.ini \
+            ansible/playbook.yml \
+            --syntax-check
+
+  terraform-validate:
+    name: Terraform validate & fmt
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.9.8"
+
+      - name: terraform fmt
+        working-directory: terraform
+        run: terraform fmt -check -recursive
+
+      - name: terraform init (no backend)
+        working-directory: terraform
+        run: terraform init -backend=false
+
+      - name: terraform validate
+        working-directory: terraform
+        run: terraform validate
