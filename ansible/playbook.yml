@@ -5,9 +5,9 @@
   vars:
     app_dir: /opt/clothes-store
     repo_url: "https://github.com/Greatjobson/sre-final.git"
-    repo_version: "main"
+    repo_version: "team-3"
     jwt_secret: "replace_with_strong_random_secret"
-    admin_email: "admin@example.com"
+    admin_email: "zumabejba@gmail.com"
     postgres_db: "clothes_store"
     postgres_user: "clothes"
     postgres_password: "replace_with_strong_postgres_password"
