@@ -1,0 +1,103 @@
+---
+- name: Deploy Clothes Store SRE stack
+  hosts: sre_nodes
+  become: true
+  vars:
+    app_dir: /opt/clothes-store
+    repo_url: "https://github.com/Greatjobson/sre-final.git"
+    repo_version: "main"
+    jwt_secret: "replace_with_strong_random_secret"
+    admin_email: "admin@example.com"
+    postgres_db: "clothes_store"
+    postgres_user: "clothes"
+    postgres_password: "replace_with_strong_postgres_password"
+    grafana_admin_password: "admin"
+
+  tasks:
+    - name: Install system dependencies
+      ansible.builtin.apt:
+        name:
+          - ca-certificates
+          - curl
+          - git
+          - gnupg
+          - lsb-release
+        state: present
+        update_cache: true
+
+    - name: Create Docker keyring directory
+      ansible.builtin.file:
+        path: /etc/apt/keyrings
+        state: directory
+        mode: "0755"
+
+    - name: Download Docker apt key
+      ansible.builtin.get_url:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        dest: /etc/apt/keyrings/docker.asc
+        mode: "0644"
+
+    - name: Add Docker apt repository
+      ansible.builtin.apt_repository:
+        repo: "deb [arch=amd64 signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable"
+        state: present
+        filename: docker
+
+    - name: Install Docker Engine and Compose plugin
+      ansible.builtin.apt:
+        name:
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
+          - docker-buildx-plugin
+          - docker-compose-plugin
+        state: present
+        update_cache: true
+
+    - name: Enable Docker service
+      ansible.builtin.service:
+        name: docker
+        state: started
+        enabled: true
+
+    - name: Clone or update application repository
+      ansible.builtin.git:
+        repo: "{{ repo_url }}"
+        dest: "{{ app_dir }}"
+        version: "{{ repo_version }}"
+        force: true
+
+    - name: Write environment file
+      ansible.builtin.copy:
+        dest: "{{ app_dir }}/.env"
+        mode: "0600"
+        content: |
+          JWT_SECRET={{ jwt_secret }}
+          ADMIN_EMAIL={{ admin_email }}
+          POSTGRES_DB={{ postgres_db }}
+          POSTGRES_USER={{ postgres_user }}
+          POSTGRES_PASSWORD={{ postgres_password }}
+          GRAFANA_ADMIN_PASSWORD={{ grafana_admin_password }}
+
+    - name: Validate Docker Compose configuration
+      ansible.builtin.command:
+        cmd: docker compose config -q
+        chdir: "{{ app_dir }}"
+      changed_when: false
+
+    - name: Build and start application stack
+      ansible.builtin.command:
+        cmd: docker compose up -d --build
+        chdir: "{{ app_dir }}"
+      changed_when: true
+
+    - name: Show running containers
+      ansible.builtin.command:
+        cmd: docker compose ps
+        chdir: "{{ app_dir }}"
+      changed_when: false
+      register: compose_ps
+
+    - name: Print deployment status
+      ansible.builtin.debug:
+        var: compose_ps.stdout_lines

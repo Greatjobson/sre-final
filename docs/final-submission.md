@@ -19,10 +19,15 @@ Core services:
 - `order-service`: order creation, order status, and analytics
 - `user-service`: user administration APIs
 - `chat-service`: user chat endpoint
+- `notification-service`: NATS subscriber that logs successful login and order-created events
+- `nats`: lightweight event broker between producers and notification subscriber
 - `mongo`: current application database
 - `postgres`: provisioned PostgreSQL database container
 - `prometheus`: metrics collection
 - `grafana`: dashboard visualization
+- `docker-stack.yml`: Docker Swarm stack with replicas and restart policies
+- `k8s/`: Kubernetes manifests with Deployments, Services, PVCs, NodePorts, and HPA
+- `ansible/`: automated VM configuration and Docker Compose deployment
 
 ## Functional Requirements Coverage
 
@@ -32,9 +37,13 @@ Core services:
 | Authentication and authorization | `auth-service`, JWT, cookies |
 | Product display | `product-service`, `/api/product` |
 | Transactional operations | `order-service`, `/orders` |
-| Independent backend services | Separate containers and service folders |
+| Independent backend services | Separate containers and service folders, including `notification-service` |
+| Event-driven notification logging | `auth.login` and `orders.created` events through NATS |
 | Metrics collection | `/metrics` endpoints and Prometheus |
 | Failure logging/detection | Docker logs, Prometheus targets, Grafana dashboard, alerts |
+| Docker Swarm orchestration | `docker-stack.yml` |
+| Kubernetes orchestration | `k8s/namespace.yaml`, `k8s/app-stack.yaml`, `k8s/monitoring.yaml` |
+| Configuration automation | `ansible/playbook.yml` |
 
 ## Docker Deployment
 
@@ -103,9 +112,11 @@ dial tcp: lookup wrong-mongo-host on 127.0.0.11:53: no such host
 Detailed supporting documents:
 
 - `docs/deployment-guide.md`
+- `docs/docker-swarm-guide.md`
 - `docs/assignment4-incident-response.md`
 - `docs/postmortem.md`
 - `docs/assignment5-terraform-report.md`
+- `docs/assignment6-automation-capacity.md`
 - `docs/final-pdf-checklist.md`
 
 ## Screenshot Placeholders
@@ -120,3 +131,7 @@ Insert screenshots into the final PDF:
 6. Terraform init/plan/apply
 7. EC2 public IP output
 8. Incident before/failure/recovery states
+9. NATS notification logs for login and order-created events
+10. Docker Swarm `docker stack services clothes`
+11. Kubernetes `kubectl get pods -n clothes-store` and `kubectl get hpa -n clothes-store`
+12. Ansible successful play recap

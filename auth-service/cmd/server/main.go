@@ -5,12 +5,13 @@ import (
 	"log"
 	"time"
 
-	"github.com/Tedra-ez/AdvancedProgramming_Final/internal/config"
-	"github.com/Tedra-ez/AdvancedProgramming_Final/internal/db"
-	backendhandlers "github.com/Tedra-ez/AdvancedProgramming_Final/internal/handlers"
-	"github.com/Tedra-ez/AdvancedProgramming_Final/internal/middleware"
-	"github.com/Tedra-ez/AdvancedProgramming_Final/internal/repository"
-	"github.com/Tedra-ez/AdvancedProgramming_Final/internal/services"
+	"github.com/Tedra-ez/AdvancedProgramming_Final/auth-service/internal/config"
+	"github.com/Tedra-ez/AdvancedProgramming_Final/auth-service/internal/db"
+	backendhandlers "github.com/Tedra-ez/AdvancedProgramming_Final/auth-service/internal/handlers"
+	"github.com/Tedra-ez/AdvancedProgramming_Final/auth-service/internal/middleware"
+	"github.com/Tedra-ez/AdvancedProgramming_Final/auth-service/internal/repository"
+	"github.com/Tedra-ez/AdvancedProgramming_Final/auth-service/internal/services"
+	"github.com/Tedra-ez/AdvancedProgramming_Final/pkg/events"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -34,7 +35,9 @@ func main() {
 
 	userRepo := repository.NewUserRepository(mongoClient.Collection("users"))
 	authService := services.NewAuthService(userRepo)
-	authHandler := backendhandlers.NewAuthHandler(authService)
+	eventPublisher := events.NewPublisher(cfg.NATSURL, "auth-service")
+	defer eventPublisher.Close()
+	authHandler := backendhandlers.NewAuthHandler(authService, eventPublisher)
 
 	server := gin.New()
 	server.Use(gin.Recovery(), middleware.CORS(cfg.FrontendOrigin), middleware.Metrics(), middleware.Logger())

@@ -14,6 +14,7 @@ services:
       - order-service
       - user-service
       - chat-service
+      - notification-service
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://127.0.0.1/health >/dev/null 2>&1 || exit 1"]
       interval: 15s
@@ -33,8 +34,10 @@ services:
       - MONGODB_URI=mongodb://mongo:27017
       - JWT_SECRET=${JWT_SECRET:?JWT_SECRET is required}
       - FRONTEND_ORIGIN=*
+      - NATS_URL=nats://nats:4222
     depends_on:
       - mongo
+      - nats
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost:8082/health >/dev/null 2>&1 || exit 1"]
       interval: 15s
@@ -77,8 +80,10 @@ services:
       - MONGODB_URI=mongodb://mongo:27017
       - JWT_SECRET=${JWT_SECRET:?JWT_SECRET is required}
       - FRONTEND_ORIGIN=*
+      - NATS_URL=nats://nats:4222
     depends_on:
       - mongo
+      - nats
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost:8084/health >/dev/null 2>&1 || exit 1"]
       interval: 15s
@@ -125,6 +130,25 @@ services:
       retries: 3
       start_period: 15s
 
+  notification-service:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    container_name: notification-service
+    restart: unless-stopped
+    command: ["/app/bin/notification-service"]
+    environment:
+      - BACKEND_PORT=8087
+      - NATS_URL=nats://nats:4222
+    depends_on:
+      - nats
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8087/health >/dev/null 2>&1 || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
   frontend:
     build:
       context: .
@@ -148,6 +172,7 @@ services:
       - order-service
       - user-service
       - chat-service
+      - notification-service
     volumes:
       - product-images:/app/static/assets/products
     healthcheck:
@@ -179,6 +204,21 @@ services:
     volumes:
       - postgres-data:/var/lib/postgresql/data
 
+  nats:
+    image: nats:2.10-alpine
+    container_name: nats
+    restart: unless-stopped
+    ports:
+      - "4222:4222"
+      - "8222:8222"
+    command: ["-m", "8222"]
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8222/healthz >/dev/null 2>&1 || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
   node-exporter:
     image: prom/node-exporter:latest
     container_name: node-exporter
@@ -208,6 +248,7 @@ services:
       - order-service
       - user-service
       - chat-service
+      - notification-service
       - node-exporter
 
   grafana:

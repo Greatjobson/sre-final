@@ -10,17 +10,24 @@ The assignment requires PDF submission with screenshots. Use this checklist befo
   - `order-service`
   - `user-service`
   - `chat-service`
+  - `notification-service`
   - `frontend`
   - `gateway`
   - `terraform`
+  - `k8s`
+  - `ansible`
 
 ## Docker Evidence
 
 - `docker compose up -d --build`
 - `docker compose ps`
-- Browser opened at `http://localhost:8080`
-- Product API response at `http://localhost:8080/api/product`
-- Auth refresh response from `POST http://localhost:8080/auth/refresh`
+- Browser opened at `http://localhost`
+- Product API response at `http://localhost/api/product`
+- Notification counters at `http://localhost/notifications/events`
+- Notification logs:
+  ```bash
+  docker compose logs --tail 50 notification-service
+  ```
 
 ## Monitoring Evidence
 
@@ -28,6 +35,31 @@ The assignment requires PDF submission with screenshots. Use this checklist befo
 - Prometheus alerts or rules page
 - Grafana dashboard list
 - Grafana `Clothes Store Overview` dashboard
+
+## Docker Swarm Evidence
+
+- `docker swarm init`
+- `docker stack deploy -c docker-stack.yml clothes`
+- `docker node ls`
+- `docker stack services clothes`
+- `docker stack ps clothes`
+- `docker service logs clothes_notification-service --tail 50`
+
+## Kubernetes Evidence
+
+- `kubectl apply -f k8s/namespace.yaml`
+- `kubectl apply -f k8s/app-stack.yaml`
+- `kubectl apply -f k8s/monitoring.yaml`
+- `kubectl get pods -n clothes-store`
+- `kubectl get svc -n clothes-store`
+- `kubectl get hpa -n clothes-store`
+- `kubectl logs -n clothes-store deploy/notification-service`
+
+## Ansible Evidence
+
+- `ansible-playbook -i ansible/inventory.ini ansible/playbook.yml`
+- Successful Ansible play recap
+- Deployment status task output with `docker compose ps`
 
 ## Terraform Evidence
 
@@ -61,6 +93,8 @@ The assignment requires PDF submission with screenshots. Use this checklist befo
 
 - README/setup instructions
 - Deployment guide
+- Docker Swarm guide
 - Assignment 4 incident response report
 - Postmortem analysis
 - Assignment 5 Terraform report
+- Assignment 6 automation/capacity report

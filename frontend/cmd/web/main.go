@@ -10,8 +10,8 @@ import (
 	"path/filepath"
 
 	"github.com/Tedra-ez/AdvancedProgramming_Final/frontend/internal/config"
-	"github.com/Tedra-ez/AdvancedProgramming_Final/internal/middleware"
-	"github.com/Tedra-ez/AdvancedProgramming_Final/internal/services"
+	"github.com/Tedra-ez/AdvancedProgramming_Final/frontend/internal/middleware"
+	"github.com/Tedra-ez/AdvancedProgramming_Final/frontend/internal/services"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
