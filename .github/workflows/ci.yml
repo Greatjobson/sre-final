@@ -38,11 +38,16 @@ jobs:
       - name: Build all services
         run: |
           mkdir -p bin
-          for svc in auth-service product-service order-service user-service chat-service notification-service frontend; do
+          # Backend services share the cmd/server layout
+          for svc in auth-service product-service order-service user-service chat-service notification-service; do
             echo "==> building $svc"
             CGO_ENABLED=0 GOOS=linux GOARCH=amd64 \
               go build -o "bin/$svc" "./$svc/cmd/server"
           done
+          # Frontend uses cmd/web
+          echo "==> building frontend"
+          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 \
+            go build -o bin/frontend ./frontend/cmd/web
 
       - name: Run tests (if any)
         # `-count=1` disables test cache; `|| true` is intentionally NOT used —
