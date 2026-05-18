@@ -234,7 +234,7 @@ spec:
     spec:
       containers:
         - name: auth-service
-          image: clothes_store_final_v10-auth-service:latest
+          image: clothes-store-auth-service:latest
           imagePullPolicy: IfNotPresent
           command: ["/app/bin/auth-service"]
           env:
@@ -290,7 +290,7 @@ spec:
     spec:
       containers:
         - name: product-service
-          image: clothes_store_final_v10-product-service:latest
+          image: clothes-store-product-service:latest
           imagePullPolicy: IfNotPresent
           command: ["/app/bin/product-service"]
           env:
@@ -346,7 +346,7 @@ spec:
     spec:
       containers:
         - name: order-service
-          image: clothes_store_final_v10-order-service:latest
+          image: clothes-store-order-service:latest
           imagePullPolicy: IfNotPresent
           command: ["/app/bin/order-service"]
           env:
@@ -402,7 +402,7 @@ spec:
     spec:
       containers:
         - name: user-service
-          image: clothes_store_final_v10-user-service:latest
+          image: clothes-store-user-service:latest
           imagePullPolicy: IfNotPresent
           command: ["/app/bin/user-service"]
           env:
@@ -458,7 +458,7 @@ spec:
     spec:
       containers:
         - name: chat-service
-          image: clothes_store_final_v10-chat-service:latest
+          image: clothes-store-chat-service:latest
           imagePullPolicy: IfNotPresent
           command: ["/app/bin/chat-service"]
           env:
@@ -514,7 +514,7 @@ spec:
     spec:
       containers:
         - name: notification-service
-          image: clothes_store_final_v10-notification-service:latest
+          image: clothes-store-notification-service:latest
           imagePullPolicy: IfNotPresent
           command: ["/app/bin/notification-service"]
           env:
@@ -568,7 +568,7 @@ spec:
     spec:
       containers:
         - name: frontend
-          image: clothes_store_final_v10-frontend:latest
+          image: clothes-store-frontend:latest
           imagePullPolicy: IfNotPresent
           env:
             - name: FRONTEND_PORT
