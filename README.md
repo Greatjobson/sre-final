@@ -227,6 +227,29 @@ ansible-playbook -i ansible/inventory.ini ansible/playbook.yml \
   -e repo_url=https://github.com/YOUR_ACCOUNT/YOUR_REPO.git
 ```
 
+## CI/CD (branch `team-3`)
+
+GitHub Actions workflow: `.github/workflows/team3-cicd.yml`.
+
+On push to `team-3`, pipeline performs:
+
+1. CI: `go test ./...`
+2. CD over SSH:
+   - run Ansible provisioning/update
+   - pull branch `team-3` on server
+   - run shell + Makefile deployment flow:
+     - `make predeploy-check`
+     - `make docker-build`
+     - `make k8s-deploy`
+     - `make health-check`
+
+Required repository secrets:
+
+- `DEPLOY_HOST`
+- `DEPLOY_USER`
+- `DEPLOY_SSH_KEY`
+- `DEPLOY_APP_DIR` (optional, default `/opt/clothes-store`)
+
 ## Incident Simulation
 
 The order-service incident is simulated with an invalid database hostname:
