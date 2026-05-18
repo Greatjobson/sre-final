@@ -1,188 +1,207 @@
-Incident Response Simulation and Infrastructure as Code Implementation
+End Term Project
+Comprehensive SRE Implementation for a Distributed Microservices System
 1. Title
-Design and Deployment of a Containerized Microservices System with Terraform-Based
-Infrastructure Provisioning and Incident Response Simulation
-2. Objectives
-The primary objective of this project is to integrate Infrastructure as Code (IaC) principles with
-Site Reliability Engineering (SRE) practices by designing, deploying, and analyzing a
-containerized microservices-based application.
-The project aims to:
-1. Implement a microservices architecture using containerization technologies.
-2. Provision infrastructure using Terraform to ensure reproducibility and automation.
-3. Deploy and orchestrate services using Docker Compose.
-4. Integrate monitoring and observability tools.
-5. Simulate a realistic production-level incident.
-6. Conduct a structured incident response process.
-7. Produce a comprehensive postmortem analysis.
-3. System Requirements
-3.1 Functional Requirements
-The system shall:
-1. Provide a web-based interface for user interaction.
-2. Support user authentication and authorization.
-3. Enable retrieval and display of product data.
-4. Allow users to perform transactional operations (e.g., order creation).
-5. Ensure communication between independent backend services.
-6. Collect and expose system metrics for monitoring.
-7. Detect and log service failures.
-3.2 Non-Functional Requirements
-The system shall:
-1. Ensure scalability through modular microservices.
-2. Maintain fault isolation between services.
-3. Provide observability via metrics and dashboards.
-4. Enable automated deployment using IaC.
-5. Support containerized execution across environments.
-6. Ensure reproducibility of infrastructure and services.
-4. Technology Stack
-The system shall be implemented using the following technologies:
-● Backend: Python (FastAPI) or any other Programming language(that supports
-microservices)
-● Frontend: JavaScript served via Nginx
-● Database: PostgreSQL
-● Containerization: Docker
-● Orchestration: Docker Compose and Stack
-● Monitoring: Prometheus and Grafana
-● Infrastructure as Code: Terraform
-5. System Architecture
-The application follows a microservices-based architecture, consisting of independent services
-communicating over HTTP.
-Core Components
-● Frontend Layer: User interface served via Nginx
-● API Gateway / Reverse Proxy: Request routing
-● Microservices:
-a. Authentication Service
-b. Product Service
-c. Order Service
-d. User Service
-e. Chat between User Service
-● Database Layer: PostgreSQL
-● Monitoring Layer:
-a. Prometheus (metrics collection)
-b. Grafana (visualization)
-6. Infrastructure as Code (Assignment 5)
-6.1 Objective
-To provision the required infrastructure using Terraform in a declarative and reproducible
-manner.
-6.2 Requirements
-The Terraform configuration shall:
-1. Provision a virtual machine (VM) or cloud instance.
-2. Configure network access rules, including:
-a. HTTP (80)
-b. Grafana (3000)
-c. Prometheus (9090)
-d. SSH (22)
-3. Output the public IP address of the instance.
-4. Ensure infrastructure reproducibility using:
-a. terraform init
-b. terraform plan
-c. terraform apply
-6.3 Expected Deliverables
-1. main.tf
-2. variables.tf
-3. outputs.tf
-4. terraform.tfvars
-5. Deployment documentation
-7. Containerized Deployment
-The system shall be deployed using Docker Compose, including:
-1. Frontend container
-2. Backend microservices containers
-3. PostgreSQL database container
-4. Prometheus container
-5. Grafana container
-Each service shall:
-1. Run in an isolated container
-2. Communicate via internal Docker networking
-3. Use environment variables for configuration
-8. Monitoring and Observability
-The system shall integrate monitoring tools:
-1. Prometheus shall collect metrics from services.
-2. Grafana shall visualize system performance.
-3. System health shall be validated via:
-a. Service availability
-b. Metrics endpoints
-c. Dashboard visualization
-9. Incident Response Simulation (Assignment 4)
-9.1 Objective
-To simulate a realistic system failure and evaluate the response process.
-9.2 Incident Scenario
-A failure shall be introduced in the Order Service, caused by incorrect database configuration
-(e.g., invalid connection string or hostname).
-9.3 Requirements
-The simulation shall include:
-1. Incident Detection
-a. Identification through monitoring tools (Grafana/Prometheus)
-b. Observation of system errors or service downtime
-2. Incident Analysis
-a. Examination of logs and container status
-b. Identification of root cause
-3. Incident Mitigation
-a. Correction of configuration errors
-b. Restart of affected services
-4. Service Restoration
-a. Verification of system functionality
-b. Confirmation via metrics and user interface
-9.4 Incident Report Requirements
-The incident report shall include:
-1. Incident summary
-2. Impact assessment
-3. Severity classification
-4. Timeline of events
-5. Root cause analysis
-6. Mitigation steps
-7. Resolution confirmation
-10. Postmortem Analysis
-10.1 Objective
-To evaluate the incident and propose improvements to prevent recurrence.
-10.2 Requirements
-The postmortem document shall include:
-1. Incident Overview
-2. Customer Impact
-3. Root Cause Analysis
-4. Detection and Response Evaluation
-5. Resolution Summary
-6. Lessons Learned
-7. Action Items
-10.3 Action Items
-Action items shall:
-1. Address system weaknesses
-2. Improve monitoring and alerting
-3. Enhance deployment reliability
-4. Reduce future incident risk
-11. Deliverables
-The final submission shall include:
-1. Source Code
-a. Microservices implementation
-b. Frontend application
-2. Container Configuration
-a. docker-compose.yml
-b. Dockerfiles
-3. Infrastructure Code
-a. Terraform configuration files
-4. Documentation
-a. README file with setup instructions
-b. Deployment guide
-5. Assignment 4 Report
-a. Incident response simulation
-b. Postmortem analysis
-6. Assignment 5 Report
-a. Terraform implementation and explanation
-7. Supporting Evidence
-a. Screenshots of:
-i. Running containers
-ii. Grafana dashboards
-iii. Prometheus targets
-iv. System before and after incident
-12. Evaluation Criteria
-The project shall be evaluated based on:
-1. Correct implementation of microservices architecture
-2. Proper use of Docker and containerization
-3. Effective use of Terraform for infrastructure provisioning
-4. Quality and realism of incident simulation
-5. Depth of postmortem analysis
-6. Clarity and completeness of documentation
-7. Demonstration of system functionality
-13. Conclusion
-This project demonstrates the integration of modern DevOps practices, combining
-containerization, infrastructure automation, monitoring, and incident management. It reflects
-real-world workflows in distributed systems and highlights the importance of reliability,
-observability, and structured operational response. Good luck !!! ONLY PDF !!! add screenshots
-for all tasks !!!
+End-to-End Implementation of Site Reliability Engineering Practices in a Multi-Orchestrated
+Microservices Infrastructure Using Docker Swarm, Kubernetes, Terraform, and Ansible
+2. Abstract
+This project presents a comprehensive implementation of Site Reliability Engineering (SRE)
+principles applied to a distributed microservices-based system. The system integrates
+containerization, multi-platform orchestration, monitoring, infrastructure provisioning,
+configuration management, incident response, and capacity planning.
+The architecture consists of more than five independent microservices deployed using both
+Docker Swarm and Kubernetes to demonstrate comparative orchestration strategies.
+Infrastructure provisioning is performed using Terraform, while system configuration and
+deployment automation are managed using Ansible.
+Observability is achieved through Prometheus and Grafana, enabling real-time monitoring and
+alerting. A simulated incident is introduced to evaluate system resilience, followed by a
+structured postmortem analysis. Additionally, automation mechanisms and capacity planning
+strategies are implemented to enhance reliability and scalability.
+This project demonstrates a full SRE lifecycle, including system setup, monitoring, incident
+management, automation, and performance optimization.
+3. Objectives
+The primary objective of this project is to demonstrate the integration of SRE practices across
+the entire system lifecycle.
+Specific objectives include:
+1. Designing and deploying a distributed microservices architecture (6+ services)
+2. Implementing multi-orchestration using Docker Swarm and Kubernetes
+3. Provisioning infrastructure using Terraform
+4. Automating configuration and deployment using Ansible
+5. Defining SLIs and SLOs
+6. Implementing monitoring and alerting systems
+7. Simulating and resolving production incidents
+8. Conducting postmortem analysis
+9. Implementing automation and capacity planning strategies
+4. System Overview
+The system is a scalable web-based microservices application designed for SRE demonstration.
+Microservices (≥ 6) you can use any other services for example:
+1. Authentication Service — user login and security
+2. Product Service — product catalog management
+3. Order Service — order processing
+4. Payment Service — payment handling simulation
+5. Notification Service — email/alert simulation
+6. User Profile Service — user data management
+Supporting Components
+1. Frontend: Nginx-based web interface
+2. Database: PostgreSQL
+3. Optional Message Broker: Redis / RabbitMQ
+4. Monitoring: Prometheus + Grafana
+5. Assignment Integration
+Assignment 1 — Environment Setup
+1. Docker environment setup
+2. Containerized services
+3. Docker Compose orchestration
+Assignment 2 — SLI/SLO Design
+SLIs:
+1. Availability
+2. Latency
+3. Error rate
+4. Request success rate
+SLOs:
+1. Availability ≥ 99%
+2. Latency ≤ 200 ms
+3. Error rate ≤ 1%
+Assignment 3 — Monitoring
+1. Prometheus metrics collection
+2. Grafana dashboards
+3. Alert configuration
+Midterm Project
+1. Initial microservices implementation
+2. Functional system deployment
+Assignment 4 — Incident Response
+1. Simulated Order Service failure
+2. Root cause analysis
+3. Recovery process
+Assignment 5 — Infrastructure as Code
+1. Terraform-based provisioning
+2. Automated VM creation
+Assignment 6 — Automation & Capacity Planning
+1. Automated deployment
+2. Health checks and restart policies
+3. Load analysis and scaling strategies
+6. Multi-Orchestration Architecture
+6.1 Docker Swarm
+Used for:
+1. Simple clustering
+2. Service replication
+3. Fast deployment
+docker swarm init
+docker stack deploy -c docker-compose.yml app
+6.2 Kubernetes
+Used for:
+1. Advanced orchestration
+2. Auto-scaling
+3. Self-healing
+4. Declarative deployments
+Components:
+1. Pods
+2. Deployments
+3. Services
+4. ConfigMaps
+6.3 Justification
+Using both platforms enables:
+1. Comparative analysis of orchestration tools
+2. Demonstration of flexibility in deployment
+3. Deeper understanding of SRE infrastructure design
+7. Infrastructure Provisioning (Terraform)
+Terraform is used to:
+1. Provision cloud infrastructure (VMs)
+2. Configure networking and access rules
+3. Ensure reproducibility
+Key Benefits
+1. Declarative configuration
+2. Version control
+3. Automated provisioning
+8. Configuration Management (Ansible)
+Ansible automates:
+1. Installation of Docker and Kubernetes
+2. Node configuration
+3. Deployment of services
+4. Monitoring setup
+Tasks
+1. Install dependencies
+2. Configure environment
+3. Deploy application stack
+4. Configure monitoring tools
+9. System Architecture
+User
+|
+Frontend (Nginx)
+|
+API Gateway
+|
++--------------------------------------+
+| Microservices |
+|--------------------------------------|
+| Auth | Product | Order | Payment |
+| Notification | User Profile |
++--------------------------------------+
+|
+PostgreSQL / Redis
+Monitoring:
+Prometheus → Grafana
+Infrastructure:
+Terraform → VM provisioning
+Configuration:
+Ansible → Setup & deployment
+Orchestration:
+Docker Swarm + Kubernetes
+10. Monitoring and Observability
+Tools
+● Prometheus — metrics collection
+● Grafana — visualization
+Metrics
+1. CPU usage
+2. Memory usage
+3. Request rate
+4. Error rate
+5. Service uptime
+11. Incident Simulation
+Scenario
+Order Service fails due to incorrect database configuration.
+Impact
+1. Order creation unavailable
+2. Partial service degradation
+Response
+1. Detection via monitoring
+2. Log analysis
+3. Configuration fix
+4. Service restart
+Outcome
+1. System restored
+2. Metrics normalized
+12. Automation
+1. Docker-based automated deployment
+2. Ansible automation scripts
+3. Service restart policies
+4. Health checks
+5. Monitoring alerts
+13. Capacity Planning
+Findings
+1. Order and Payment services consume most resources
+2. Database is a bottleneck
+Strategies
+1. Horizontal scaling (replicas)
+2. Vertical scaling (CPU/RAM)
+3. Database optimization
+14. Results
+The system demonstrates:
+1. Multi-orchestrated deployment
+2. Infrastructure automation
+3. Reliable monitoring and alerting
+4. Efficient incident handling
+5. Scalable architecture
+15. Conclusion
+This project demonstrates a full implementation of SRE practices in a distributed system. By
+integrating multi-orchestration, infrastructure automation, monitoring, and incident response, the
+system achieves high reliability, scalability, and maintainability.
+16. Deliverables
+1. Microservices source code (6+ services)
+2. Docker Compose / Swarm configuration
+3. Kubernetes manifests
+4. Terraform files
+5. Ansible playbooks
+6. Monitoring setup
+7. Incident report and postmortem
+8. Screenshots and demo evidence
+9. Upload ONLY PDF WITH GIT LINK!!!
+и так что мне делать ? до дедлайна 1 день есть микросервисы но там херня какая то с реализацией

@@ -10,8 +10,8 @@ import (
 	"time"
 
 	"github.com/Tedra-ez/AdvancedProgramming_Final/frontend/internal/config"
-	"github.com/Tedra-ez/AdvancedProgramming_Final/internal/models"
-	"github.com/Tedra-ez/AdvancedProgramming_Final/internal/services"
+	"github.com/Tedra-ez/AdvancedProgramming_Final/frontend/internal/models"
+	"github.com/Tedra-ez/AdvancedProgramming_Final/frontend/internal/services"
 	"github.com/gin-gonic/gin"
 )
 

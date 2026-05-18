@@ -5,12 +5,13 @@ import (
 	"log"
 	"time"
 
-	"github.com/Tedra-ez/AdvancedProgramming_Final/internal/config"
-	"github.com/Tedra-ez/AdvancedProgramming_Final/internal/db"
-	backendhandlers "github.com/Tedra-ez/AdvancedProgramming_Final/internal/handlers"
-	"github.com/Tedra-ez/AdvancedProgramming_Final/internal/middleware"
-	"github.com/Tedra-ez/AdvancedProgramming_Final/internal/repository"
-	"github.com/Tedra-ez/AdvancedProgramming_Final/internal/services"
+	"github.com/Tedra-ez/AdvancedProgramming_Final/order-service/internal/config"
+	"github.com/Tedra-ez/AdvancedProgramming_Final/order-service/internal/db"
+	backendhandlers "github.com/Tedra-ez/AdvancedProgramming_Final/order-service/internal/handlers"
+	"github.com/Tedra-ez/AdvancedProgramming_Final/order-service/internal/middleware"
+	"github.com/Tedra-ez/AdvancedProgramming_Final/order-service/internal/repository"
+	"github.com/Tedra-ez/AdvancedProgramming_Final/order-service/internal/services"
+	"github.com/Tedra-ez/AdvancedProgramming_Final/pkg/events"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -45,7 +46,9 @@ func main() {
 	indexCancel()
 
 	orderService := services.NewOrderService(orderRepo, productRepo, userRepo)
-	orderHandler := backendhandlers.NewOrderHandler(orderService)
+	eventPublisher := events.NewPublisher(cfg.NATSURL, "order-service")
+	defer eventPublisher.Close()
+	orderHandler := backendhandlers.NewOrderHandler(orderService, eventPublisher)
 	analyticsService := services.NewAnalyticsService(orderRepo, productRepo, userRepo)
 	analyticsHandler := backendhandlers.NewAnalyticsHandler(analyticsService)
 	authService := services.NewAuthService(nil)

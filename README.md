@@ -38,7 +38,9 @@ A premium, modern online store platform built with Go. The project now includes 
 - `order-service`: `/orders*`
 - `user-service`: `/api/users*`
 - `chat-service`: `/chat*`
+- `notification-service`: subscribes to NATS events and logs successful logins and created orders.
 - `frontend`: web UI service behind gateway.
+- `nats`: event broker used between producers and notification service.
 
 ## Database Performance
 
@@ -64,12 +66,21 @@ A premium, modern online store platform built with Go. The project now includes 
 ├── chat-service/
 │   ├── cmd/server/main.go
 │   └── internal/{domain,usecase,ports,adapters}
+├── notification-service/
+│   └── cmd/server/main.go
 ├── backend/
 │   └── Dockerfile       # Builds all backend service binaries
 ├── frontend/
 │   └── Dockerfile       # Frontend container build
 ├── gateway/
 │   └── nginx.conf       # API gateway routing
+├── k8s/
+│   ├── namespace.yaml
+│   ├── app-stack.yaml
+│   └── monitoring.yaml
+├── ansible/
+│   ├── inventory.example.ini
+│   └── playbook.yml
 ├── grafana/
 │   ├── dashboards/
 │   └── provisioning/
@@ -80,6 +91,7 @@ A premium, modern online store platform built with Go. The project now includes 
 │   └── terraform.tfvars
 └── docs/
     ├── deployment-guide.md
+    ├── docker-swarm-guide.md
     ├── assignment4-incident-response.md
     ├── postmortem.md
     └── assignment5-terraform-report.md
@@ -119,6 +131,8 @@ docker compose up -d --build
 - Order API via gateway: http://localhost/orders
 - User API via gateway: http://localhost/api/users
 - Chat API via gateway: http://localhost/chat/messages
+- Notification event counters: http://localhost/notifications/events
+- NATS monitoring: http://localhost:8222
 - MongoDB: localhost:27017
 - PostgreSQL: localhost:5432
 - Prometheus: http://localhost:9090
@@ -132,10 +146,18 @@ Docker build files:
 ## Monitoring
 
 - Prometheus scrapes every application service through `/metrics`.
+- `notification-service` is also scraped and exposes `/health`, `/metrics`, and `/notifications/events`.
 - Prometheus also scrapes host metrics from `node-exporter` (`node-exporter:9100`) for system-level telemetry.
 - Grafana is automatically provisioned with the Prometheus datasource.
 - Grafana includes the `Clothes Store Overview` dashboard.
 - Alerts are defined in `alerts.yml`, including high latency, high error rate, service down, high CPU usage, and restart loop warning.
+
+## Event-Driven Notification Service
+
+- `auth-service` publishes `auth.login` after a successful login.
+- `order-service` publishes `orders.created` after an order is stored.
+- `notification-service` subscribes to both NATS subjects and logs the event payload summary.
+- The main application flow is fail-open: if NATS is unavailable, login and order creation continue, while the producer logs the publish error.
 
 ## SRE Automation & Capacity Planning
 
@@ -167,6 +189,43 @@ terraform apply
 ```
 
 Before applying on Google Cloud, run `gcloud auth application-default login` and update `terraform/terraform.tfvars` with your `project_id`, zone, SSH public key, and optional repository URL.
+
+## Docker Swarm
+
+Swarm deployment is defined in `docker-stack.yml`.
+
+```bash
+docker compose build
+docker swarm init
+docker stack deploy -c docker-stack.yml clothes
+docker stack services clothes
+```
+
+See `docs/docker-swarm-guide.md` for screenshot evidence commands.
+
+## Kubernetes
+
+Kubernetes manifests are in `k8s/`.
+
+```bash
+kubectl apply -f k8s/namespace.yaml
+kubectl apply -f k8s/app-stack.yaml
+kubectl apply -f k8s/monitoring.yaml
+kubectl get pods -n clothes-store
+kubectl get hpa -n clothes-store
+```
+
+Gateway NodePort: `http://localhost:30080`.
+
+## Ansible
+
+Ansible automation is in `ansible/`.
+
+```bash
+cp ansible/inventory.example.ini ansible/inventory.ini
+ansible-playbook -i ansible/inventory.ini ansible/playbook.yml \
+  -e repo_url=https://github.com/YOUR_ACCOUNT/YOUR_REPO.git
+```
 
 ## Incident Simulation
 

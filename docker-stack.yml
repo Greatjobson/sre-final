@@ -1,0 +1,267 @@
+services:
+  gateway:
+    image: nginx:1.27-alpine
+    ports:
+      - "80:80"
+    configs:
+      - source: gateway_nginx
+        target: /etc/nginx/nginx.conf
+    deploy:
+      replicas: 2
+      update_config:
+        parallelism: 1
+        delay: 10s
+      restart_policy:
+        condition: any
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1/health >/dev/null 2>&1 || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+
+  auth-service:
+    image: clothes_store_final_v10-auth-service:latest
+    command: ["/app/bin/auth-service"]
+    environment:
+      BACKEND_PORT: "8082"
+      MONGODB_URI: mongodb://mongo:27017
+      JWT_SECRET: ${JWT_SECRET}
+      FRONTEND_ORIGIN: "*"
+      NATS_URL: nats://nats:4222
+    deploy:
+      replicas: 2
+      restart_policy:
+        condition: any
+      resources:
+        limits:
+          cpus: "0.50"
+          memory: 256M
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8082/health >/dev/null 2>&1 || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+
+  product-service:
+    image: clothes_store_final_v10-product-service:latest
+    command: ["/app/bin/product-service"]
+    environment:
+      BACKEND_PORT: "8083"
+      MONGODB_URI: mongodb://mongo:27017
+      JWT_SECRET: ${JWT_SECRET}
+      FRONTEND_ORIGIN: "*"
+    volumes:
+      - product-images:/app/static/assets/products
+    deploy:
+      replicas: 2
+      restart_policy:
+        condition: any
+      resources:
+        limits:
+          cpus: "0.50"
+          memory: 256M
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8083/health >/dev/null 2>&1 || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+
+  order-service:
+    image: clothes_store_final_v10-order-service:latest
+    command: ["/app/bin/order-service"]
+    environment:
+      BACKEND_PORT: "8084"
+      MONGODB_URI: mongodb://mongo:27017
+      JWT_SECRET: ${JWT_SECRET}
+      FRONTEND_ORIGIN: "*"
+      NATS_URL: nats://nats:4222
+    deploy:
+      replicas: 2
+      restart_policy:
+        condition: any
+      resources:
+        limits:
+          cpus: "0.75"
+          memory: 384M
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8084/health >/dev/null 2>&1 || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+
+  user-service:
+    image: clothes_store_final_v10-user-service:latest
+    command: ["/app/bin/user-service"]
+    environment:
+      BACKEND_PORT: "8085"
+      MONGODB_URI: mongodb://mongo:27017
+      JWT_SECRET: ${JWT_SECRET}
+      FRONTEND_ORIGIN: "*"
+    deploy:
+      replicas: 2
+      restart_policy:
+        condition: any
+      resources:
+        limits:
+          cpus: "0.50"
+          memory: 256M
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8085/health >/dev/null 2>&1 || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+
+  chat-service:
+    image: clothes_store_final_v10-chat-service:latest
+    command: ["/app/bin/chat-service"]
+    environment:
+      BACKEND_PORT: "8086"
+      JWT_SECRET: ${JWT_SECRET}
+      FRONTEND_ORIGIN: "*"
+    deploy:
+      replicas: 2
+      restart_policy:
+        condition: any
+      resources:
+        limits:
+          cpus: "0.50"
+          memory: 256M
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8086/health >/dev/null 2>&1 || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+
+  notification-service:
+    image: clothes_store_final_v10-notification-service:latest
+    command: ["/app/bin/notification-service"]
+    environment:
+      BACKEND_PORT: "8087"
+      NATS_URL: nats://nats:4222
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: any
+      resources:
+        limits:
+          cpus: "0.50"
+          memory: 256M
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8087/health >/dev/null 2>&1 || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+
+  frontend:
+    image: clothes_store_final_v10-frontend:latest
+    environment:
+      FRONTEND_PORT: "8081"
+      AUTH_SERVICE_URL: http://auth-service:8082
+      PRODUCT_SERVICE_URL: http://product-service:8083
+      ORDER_SERVICE_URL: http://order-service:8084
+      USER_SERVICE_URL: http://user-service:8085
+      CHAT_SERVICE_URL: http://chat-service:8086
+      ANALYTICS_SERVICE_URL: http://order-service:8084
+      JWT_SECRET: ${JWT_SECRET}
+    volumes:
+      - product-images:/app/static/assets/products
+    deploy:
+      replicas: 2
+      restart_policy:
+        condition: any
+      resources:
+        limits:
+          cpus: "0.50"
+          memory: 256M
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8081/health >/dev/null 2>&1 || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+
+  mongo:
+    image: mongo:6
+    volumes:
+      - mongo-data:/data/db
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+      restart_policy:
+        condition: any
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+      restart_policy:
+        condition: any
+
+  nats:
+    image: nats:2.10-alpine
+    command: ["-m", "8222"]
+    ports:
+      - "4222:4222"
+      - "8222:8222"
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: any
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8222/healthz >/dev/null 2>&1 || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    configs:
+      - source: prometheus_config
+        target: /etc/prometheus/prometheus.yml
+      - source: prometheus_alerts
+        target: /etc/prometheus/alerts.yml
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: any
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD}
+    volumes:
+      - grafana-data:/var/lib/grafana
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: any
+
+configs:
+  gateway_nginx:
+    file: ./gateway/nginx.conf
+  prometheus_config:
+    file: ./prometheus.yml
+  prometheus_alerts:
+    file: ./alerts.yml
+
+volumes:
+  grafana-data:
+  mongo-data:
+  postgres-data:
+  product-images:

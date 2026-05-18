@@ -24,7 +24,7 @@ groups:
 
       # CRITICAL — service target is down
       - alert: ServiceDown
-        expr: up{job=~"frontend|auth-service|product-service|order-service|user-service|chat-service"} == 0
+        expr: up{job=~"frontend|auth-service|product-service|order-service|user-service|chat-service|notification-service"} == 0
         for: 30s
         labels:
           severity: critical
@@ -44,7 +44,7 @@ groups:
 
       # WARNING — restart loop indicator
       - alert: ServiceRestartLoopWarning
-        expr: changes(process_start_time_seconds{job=~"frontend|auth-service|product-service|order-service|user-service|chat-service"}[10m]) > 2
+        expr: changes(process_start_time_seconds{job=~"frontend|auth-service|product-service|order-service|user-service|chat-service|notification-service"}[10m]) > 2
         for: 1m
         labels:
           severity: warning

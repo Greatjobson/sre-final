@@ -12,6 +12,8 @@ required_services=(
   order-service
   user-service
   chat-service
+  notification-service
+  nats
   mongo
   postgres
   prometheus
@@ -64,7 +66,7 @@ if grep -Eq "wrong-mongo-host" "$COMPOSE_FILE"; then
 fi
 pass "MongoDB host sanity check passed"
 
-for svc in gateway auth-service product-service order-service user-service chat-service frontend; do
+for svc in gateway auth-service product-service order-service user-service chat-service notification-service frontend; do
   if ! awk "/^  ${svc}:/{in_svc=1} in_svc && /^  [a-zA-Z0-9_-]+:/{if(!match(\$0, /^  ${svc}:/)){in_svc=0}} in_svc{print}" "$COMPOSE_FILE" | grep -q "/health"; then
     fail "health check for '$svc' does not use /health endpoint"
   fi
