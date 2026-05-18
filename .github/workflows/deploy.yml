@@ -1,0 +1,167 @@
+name: Deploy
+
+# Deploy is intentionally SEPARATE from CI so that:
+#   1. Broken infra doesn't turn CI red.
+#   2. We can re-deploy without re-running build/test.
+#   3. Deploy only triggers on the production branch.
+on:
+  push:
+    branches: ["team-3"]
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: "Git ref to deploy (branch, tag, or sha)"
+        required: false
+        default: "team-3"
+
+concurrency:
+  # Only one deploy at a time — concurrent deploys to the same VM corrupt state.
+  group: deploy-prod
+  cancel-in-progress: false
+
+jobs:
+  preflight:
+    name: Preflight — check required secrets
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    # Without this, the next job fails 5 minutes in with a cryptic SSH error
+    # instead of failing immediately with a clear message.
+    steps:
+      - name: Verify required secrets are set
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_APP_DIR: ${{ secrets.DEPLOY_APP_DIR }}
+        run: |
+          missing=()
+          [ -z "$DEPLOY_HOST" ]    && missing+=("DEPLOY_HOST")
+          [ -z "$DEPLOY_USER" ]    && missing+=("DEPLOY_USER")
+          [ -z "$DEPLOY_SSH_KEY" ] && missing+=("DEPLOY_SSH_KEY")
+          [ -z "$DEPLOY_APP_DIR" ] && missing+=("DEPLOY_APP_DIR")
+          if [ ${#missing[@]} -ne 0 ]; then
+            echo "::error::Missing required secrets: ${missing[*]}"
+            echo "Add them in: Settings → Secrets and variables → Actions"
+            exit 1
+          fi
+          echo "All required secrets present."
+
+  deploy:
+    name: Deploy to VM
+    runs-on: ubuntu-latest
+    needs: preflight
+    timeout-minutes: 30
+    env:
+      DEPLOY_HOST:    ${{ secrets.DEPLOY_HOST }}
+      DEPLOY_USER:    ${{ secrets.DEPLOY_USER }}
+      DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+      DEPLOY_APP_DIR: ${{ secrets.DEPLOY_APP_DIR }}
+      DEPLOY_REF:     ${{ github.event.inputs.ref || github.ref_name }}
+      REPO_URL:       https://github.com/Greatjobson/sre-final.git
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.DEPLOY_REF }}
+
+      - name: Setup SSH key
+        run: |
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          # Write key, normalize line endings (key copied from Windows clipboard breaks otherwise)
+          printf '%s\n' "$DEPLOY_SSH_KEY" | tr -d '\r' > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+
+          # Validate key format before we even try to connect.
+          if ! ssh-keygen -y -f ~/.ssh/id_ed25519 > /dev/null 2>&1; then
+            echo "::error::DEPLOY_SSH_KEY is not a valid private key."
+            exit 1
+          fi
+
+          # Scan host key with timeout — hangs forever if VM is down otherwise.
+          timeout 15 ssh-keyscan -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts || {
+            echo "::error::ssh-keyscan failed — is $DEPLOY_HOST reachable?"
+            exit 1
+          }
+
+      - name: Test SSH connectivity
+        run: |
+          ssh -o BatchMode=yes -o ConnectTimeout=10 \
+            -i ~/.ssh/id_ed25519 \
+            "$DEPLOY_USER@$DEPLOY_HOST" \
+            'echo "SSH OK on $(hostname)"; uname -a'
+
+      - name: Deploy via SSH
+        # NOTE: NO single quotes around EOF — we want vars expanded on the
+        # runner side, then passed as literal values to the remote shell.
+        run: |
+          ssh -o StrictHostKeyChecking=no \
+              -i ~/.ssh/id_ed25519 \
+              "$DEPLOY_USER@$DEPLOY_HOST" bash -s <<EOF
+            set -euo pipefail
+
+            APP_DIR="$DEPLOY_APP_DIR"
+            REF="$DEPLOY_REF"
+
+            echo "==> Deploying ref=\$REF to \$APP_DIR"
+            cd "\$APP_DIR"
+
+            echo "==> Git update"
+            git fetch --all --prune
+            git checkout "\$REF"
+            git pull --ff-only origin "\$REF"
+
+            echo "==> Build Docker images (compose project: clothes-store)"
+            # Force project name so image tags are predictable.
+            export COMPOSE_PROJECT_NAME=clothes-store
+            sudo -E docker compose build
+
+            echo "==> Import images into k3s/containerd"
+            for img in \\
+              clothes-store-auth-service:latest \\
+              clothes-store-product-service:latest \\
+              clothes-store-order-service:latest \\
+              clothes-store-user-service:latest \\
+              clothes-store-chat-service:latest \\
+              clothes-store-notification-service:latest \\
+              clothes-store-frontend:latest; do
+              # Skip if compose didn't actually build this image (e.g. renamed service)
+              if ! sudo docker image inspect "\$img" > /dev/null 2>&1; then
+                echo "WARN: image \$img not found locally, skipping"
+                continue
+              fi
+              f="/tmp/\${img//[:\\/]/_}.tar"
+              sudo docker save "\$img" -o "\$f"
+              sudo ctr -n k8s.io images import "\$f"
+              rm -f "\$f"
+            done
+
+            echo "==> Apply Kubernetes manifests"
+            sudo kubectl apply -f k8s/
+
+            echo "==> Rollout restart all deployments"
+            for d in auth-service product-service order-service \\
+                     user-service chat-service notification-service frontend; do
+              sudo kubectl rollout restart deployment/\$d -n clothes-store
+            done
+
+            echo "==> Wait for rollout"
+            for d in auth-service product-service order-service \\
+                     user-service chat-service notification-service frontend; do
+              sudo kubectl rollout status deployment/\$d -n clothes-store --timeout=180s
+            done
+
+            echo "==> Final pod state"
+            sudo kubectl get pods -n clothes-store
+          EOF
+
+      - name: Smoke test
+        # Quick check that the gateway answers — if k8s rolled out but routing
+        # is broken, the deployment is still bad.
+        continue-on-error: true
+        run: |
+          ssh -o StrictHostKeyChecking=no \
+              -i ~/.ssh/id_ed25519 \
+              "$DEPLOY_USER@$DEPLOY_HOST" \
+              'curl -fsS -m 10 http://localhost/health || curl -fsS -m 10 http://localhost/'
