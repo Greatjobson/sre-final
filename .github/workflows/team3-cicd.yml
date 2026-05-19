@@ -32,6 +32,7 @@ jobs:
       DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
       DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
       DEPLOY_APP_DIR: ${{ secrets.DEPLOY_APP_DIR }}
+      REPO_URL: https://github.com/${{ github.repository }}.git
 
     steps:
       - name: Checkout
@@ -61,15 +62,30 @@ jobs:
         run: |
           set -euo pipefail
           APP_DIR="${DEPLOY_APP_DIR:-/opt/clothes-store}"
+          REPO_URL="${REPO_URL}"
 
           ssh \
             -i ~/.ssh/id_ed25519 \
             -o BatchMode=yes \
             -o IdentitiesOnly=yes \
             -o StrictHostKeyChecking=yes \
-            "$DEPLOY_USER@$DEPLOY_HOST" "export APP_DIR='$APP_DIR'; bash -se" << 'EOF'
+            "$DEPLOY_USER@$DEPLOY_HOST" "export APP_DIR='$APP_DIR' REPO_URL='$REPO_URL'; bash -se" << 'EOF'
 
             set -euo pipefail
+
+            if [ ! -d "$APP_DIR" ]; then
+              echo "==> Creating app directory: $APP_DIR"
+              sudo mkdir -p "$APP_DIR"
+              sudo chown "$USER:$USER" "$APP_DIR"
+            fi
+
+            if [ ! -d "$APP_DIR/.git" ]; then
+              echo "==> Cloning repository into $APP_DIR"
+              git clone --branch team-3 --single-branch "$REPO_URL" "$APP_DIR"
+            fi
+
+            echo "==> Fixing repository permissions"
+            sudo chown -R "$USER:$USER" "$APP_DIR"
 
             cd "$APP_DIR"
 
