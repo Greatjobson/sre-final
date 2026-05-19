@@ -235,7 +235,7 @@ spec:
       containers:
         - name: auth-service
           image: clothes-store-auth-service:latest
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Never
           command: ["/app/bin/auth-service"]
           env:
             - name: BACKEND_PORT
@@ -291,7 +291,7 @@ spec:
       containers:
         - name: product-service
           image: clothes-store-product-service:latest
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Never
           command: ["/app/bin/product-service"]
           env:
             - name: BACKEND_PORT
@@ -347,7 +347,7 @@ spec:
       containers:
         - name: order-service
           image: clothes-store-order-service:latest
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Never
           command: ["/app/bin/order-service"]
           env:
             - name: BACKEND_PORT
@@ -403,7 +403,7 @@ spec:
       containers:
         - name: user-service
           image: clothes-store-user-service:latest
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Never
           command: ["/app/bin/user-service"]
           env:
             - name: BACKEND_PORT
@@ -459,7 +459,7 @@ spec:
       containers:
         - name: chat-service
           image: clothes-store-chat-service:latest
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Never
           command: ["/app/bin/chat-service"]
           env:
             - name: BACKEND_PORT
@@ -515,7 +515,7 @@ spec:
       containers:
         - name: notification-service
           image: clothes-store-notification-service:latest
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Never
           command: ["/app/bin/notification-service"]
           env:
             - name: BACKEND_PORT
@@ -569,7 +569,7 @@ spec:
       containers:
         - name: frontend
           image: clothes-store-frontend:latest
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Never
           env:
             - name: FRONTEND_PORT
               value: "8081"
