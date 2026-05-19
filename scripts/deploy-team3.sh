@@ -20,6 +20,9 @@ make docker-build
 echo "[deploy] apply kubernetes manifests"
 make k8s-deploy
 
+echo "[deploy] configure nginx proxy for domain"
+sudo bash scripts/setup-nginx-proxy.sh
+
 echo "[deploy] run health checks"
 make health-check
 

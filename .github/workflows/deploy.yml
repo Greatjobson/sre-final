@@ -140,6 +140,9 @@ jobs:
             echo "==> Apply Kubernetes manifests"
             sudo kubectl apply -f k8s/
 
+            echo "==> Configure nginx proxy for domain"
+            sudo bash scripts/setup-nginx-proxy.sh
+
             echo "==> Rollout restart all deployments"
             for d in auth-service product-service order-service \\
                      user-service chat-service notification-service frontend; do
