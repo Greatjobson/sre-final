@@ -134,7 +134,7 @@ jobs:
               f="/tmp/\${img//[:\\/]/_}.tar"
               sudo docker save "\$img" -o "\$f"
               sudo ctr -n k8s.io images import "\$f"
-              rm -f "\$f"
+              sudo rm -f "\$f"
             done
 
             echo "==> Apply Kubernetes manifests"
