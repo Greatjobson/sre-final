@@ -235,13 +235,10 @@ On push to `team-3`, pipeline performs:
 
 1. CI: `go test ./...`
 2. CD over SSH:
-   - run Ansible provisioning/update
    - pull branch `team-3` on server
-   - run shell + Makefile deployment flow:
-     - `make predeploy-check`
-     - `make docker-build`
-     - `make k8s-deploy`
-     - `make health-check`
+   - build service images on server with Docker Compose
+   - import images into k3s/containerd
+   - apply Kubernetes manifests and wait for rollout
 
 Required repository secrets:
 
