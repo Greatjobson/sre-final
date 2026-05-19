@@ -569,7 +569,7 @@ spec:
       containers:
         - name: frontend
           image: clothes-store-frontend:latest
-          imagePullPolicy: NeverimagePullPolicy: Never
+          imagePullPolicy: Never
           env:
             - name: FRONTEND_PORT
               value: "8081"
